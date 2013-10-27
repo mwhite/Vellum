@@ -426,8 +426,11 @@ formdesigner.ui = function () {
                 .filter(_.identity);
            
             if (section.properties.length) {
-                formdesigner.widgets.questionSection(mug, section)
-                    .getSectionDisplay().appendTo($content);
+                var display = formdesigner.widgets.questionSection(mug, section)
+                    .getSectionDisplay();
+                if (display) {
+                    display.appendTo($content);
+                }
             }
         }
 
@@ -783,14 +786,6 @@ formdesigner.ui = function () {
         });
     }
 
-    function init_form_paste() {
-        var tarea = $("#fd-form-paste-textarea");
-        tarea.change(function() {
-            var parser = new controller.Parser();
-            var out = parser.parse(tarea.val());
-            $("#fd-form-paste-output").val(out);
-        })
-    }
 
     /**
      * Turns the UI on/off. Primarily used by disableUI() and enableUI()
@@ -1163,7 +1158,7 @@ formdesigner.ui = function () {
         var getExpressionFromUI = function () {
             if ($("#xpath-simple").hasClass('hide')) {
                 // advanced
-                return getExpressionInput().val();
+                return editableContentToValue(getExpressionInput().html());
             } else {
                 return getExpressionFromSimpleMode();
             }
@@ -1367,7 +1362,7 @@ formdesigner.ui = function () {
 
         // toggle simple/advanced mode
         var showAdvancedMode = function (text, showNotice) {
-            getExpressionInput().val(text);
+            getExpressionInput().html(valueToEditableContent(text));
             getExpressionPane().empty();
 
             $("#xpath-advanced").removeClass('hide');
@@ -1406,7 +1401,8 @@ formdesigner.ui = function () {
             });
 
             $xpathUI.find('#fd-xpath-show-simple-button').click(function () {
-                showSimpleMode(getExpressionInput().val());
+                showSimpleMode(editableContentToValue(
+                    getExpressionInput().html()));
             });
 
             $xpathUI.find('#fd-add-exp').click(function () {
@@ -1501,7 +1497,12 @@ formdesigner.ui = function () {
             },
             "dnd" : {
                 "drop_finish" : function(data) {
-                    formdesigner.controller.handleTreeDrop(data.o, data.r);
+                    var ufid = $(data.o).attr("id"),
+                        mug = formdesigner.controller.form.getMugByUFID(ufid),
+                        ref = formdesigner.util.mugToXPathReference(mug);
+
+                    formdesigner.controller.handleDrop(
+                        ref, data.r, data.e.clientX, data.e.clientY);
                 }
             },
             "types": {
@@ -1610,14 +1611,12 @@ formdesigner.ui = function () {
 //        SaveButton.message.SAVE = 'Save to Server';
 //        SaveButton.message.SAVED = 'Saved to Server';
         //
-        formdesigner.pluginManager.call('init');
         controller = formdesigner.controller;
         generate_scaffolding();
         init_toolbar();
         init_extra_tools();
         formdesigner.multimedia.initControllers();
         that.createJSTree();
-        init_form_paste();
         init_modal_dialogs();
 
         set_event_listeners();
@@ -1625,6 +1624,8 @@ formdesigner.ui = function () {
         setup_fancybox();
 
         formdesigner.windowManager.init();
+
+
     };
 
     return that;
@@ -1641,12 +1642,22 @@ var PluginManager = function (options) {
         this[name] = plugin;
     };
 
+    // lets a plugin disable itself if conditions warrant, so it doesn't have to
+    // guard all of its methods to be noops
+    function enabled(plugin) {
+        return !plugin.disabled;
+    }
+
     this.call = function (methodName) {
         var methodArguments = Array.prototype.slice.call(arguments, 1),
             methodType = this._methods[methodName];
 
         if (methodType === "return_all") {
             return _(this._plugins).map(function (plugin) {
+                if (!enabled(plugin)) {
+                    return;
+                }
+
                 var fn = plugin[methodName];
                 if (fn) {
                     return fn.apply(plugin, methodArguments);
@@ -1659,6 +1670,10 @@ var PluginManager = function (options) {
                 otherArguments = methodArguments.slice(1);
             _(this._plugins).each(function (plugin) {
                 var fn = plugin[methodName];
+                if (!enabled(plugin)) {
+                    return;
+                }
+
                 if (fn) {
                     var returned = fn.apply(
                         plugin, [retval].concat(otherArguments)
@@ -1689,17 +1704,33 @@ var PluginManager = function (options) {
  *  }
  */
 formdesigner.launch = function (opts) {
+    opts = opts || {};
     formdesigner.util.eventuality(formdesigner);
 
     formdesigner.pluginManager = new PluginManager({
         methods: {
-            'getToolsMenuItems': 'return_all',
             'init': 'return_all',
+            'getToolsMenuItems': 'return_all',
+            'getAccordions': 'return_all',
+            'initAccordions': 'return_all',
             'beforeParse': 'return_all',
+            'afterParse': 'return_all',
+            'contributeToXPathInput': 'process_sequentially',
+            // todo: itext is part of plugin, so add plugin interface for
+            // specifying plugin methods (can wait until we've extracted itext
+            // attributes from main parser :-))
+            'processItextMessage': 'process_sequentially',
+            'serializeItextMessage': 'process_sequentially',
+            'processXPathExpression': 'process_sequentially',
+            'serializeXPathExpression': 'process_sequentially',
+            'getErrors': 'return_all',
+            'getServerPOSTData': 'return_all',
+            'contributeToHeadXML': 'return_all',
             'contributeToModelXML': 'return_all',
             'contributeToDataElementSpec': 'process_sequentially',
             'contributeToBindElementSpec': 'process_sequentially',
             'contributeToControlElementSpec': 'process_sequentially',
+            'getSections': 'return_all',
             'contributeToMainProperties': 'process_sequentially',
             'contributeToLogicProperties': 'process_sequentially',
             'contributeToAdvancedProperties': 'process_sequentially',
@@ -1707,11 +1738,13 @@ formdesigner.launch = function (opts) {
             'preSerialize': 'return_all',
         }
     });
-    formdesigner.pluginManager.register('javaRosa', new formdesigner.plugins.javaRosa());
 
-    if(!opts){
-        opts = {};
-    }
+    _(opts.plugins).each(function (name) {
+        formdesigner.pluginManager.register(
+            name, new formdesigner.plugins[name](opts[name])
+        );
+    });
+
     formdesigner.rootElement = opts.rootElement || "#formdesigner";
     formdesigner.saveType = opts.saveType || 'full';
 

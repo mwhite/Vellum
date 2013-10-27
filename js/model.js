@@ -6,8 +6,6 @@ if (typeof formdesigner === 'undefined') {
     var formdesigner = {};
 }
 
-
-
 /**
  * A regular tree (with any amount of leafs per node)
  * @param tType - is this a DataElement tree or a controlElement tree (use 'data' or 'control' for this argument, respectively)
@@ -399,7 +397,6 @@ var Tree = function (tType) {
             nodeParent = this.getParentNode(nodeParent);
 
         }
-
         return output;
     };
 
@@ -671,6 +668,11 @@ formdesigner.model = (function () {
             }
         };
 
+        function serializeLogic(logic) {
+            return formdesigner.pluginManager.call(
+                'serializeXPathExpression', logic);
+        }
+
         /**
          * Generates an XML Xform and returns it as a string.
          */
@@ -730,21 +732,19 @@ formdesigner.model = (function () {
                         bEl,cons,consMsg,nodeset,type,relevant,required,calc,preld,preldParams,
                     i, attrs, j;
 
-
-
                 function populateVariables (mug){
                     bEl = mug.bindElement;
                     if (bEl) {
                         return {
                             nodeset: dataTree.getAbsolutePath(mug),
                             type: bEl.dataType,
-                            constraint: bEl.constraintAttr,
+                            constraint: serializeLogic(bEl.constraintAttr),
                             constraintMsg: bEl.constraintMsgAttr,
                             constraintMsgItextID: bEl.constraintMsgItextID ? 
                                 bEl.constraintMsgItextID.id : undefined,
-                            relevant: bEl.relevantAttr,
+                            relevant: serializeLogic(bEl.relevantAttr),
                             required: formdesigner.util.createXPathBoolFromJS(bEl.requiredAttr),
-                            calculate: bEl.calculateAttr,
+                            calculate: serializeLogic(bEl.calculateAttr),
                             preload: bEl.preload,
                             preloadParams: bEl.preloadParams
                         }
@@ -871,7 +871,7 @@ formdesigner.model = (function () {
                         // Set other relevant attributes
 
                         if (tagName === 'repeat') {
-                            var r_count = cProps.repeat_count,
+                            var r_count = serializeLogic(cProps.repeat_count),
                                 r_noaddrem = cProps.no_add_remove;
 
                             //make r_noaddrem an XPath bool
@@ -1053,6 +1053,8 @@ formdesigner.model = (function () {
                 xmlWriter.writeEndElement(); //CLOSE MODEL
 
                 formdesigner.intentManager.writeIntentXML(xmlWriter, dataTree);
+
+                formdesigner.pluginManager.call('contributeToHeadXML', xmlWriter);
 
                 xmlWriter.writeEndElement(); //CLOSE HEAD
 
@@ -1259,7 +1261,8 @@ formdesigner.model = (function () {
                     pathWithoutRoot = pathString.substring(1 + pathString.indexOf('/', 1))
                     refMug = formdesigner.controller.getMugByPath(pathString);
 
-                if (!refMug && formdesigner.allowedDataNodeReferences.indexOf(pathWithoutRoot) == -1) {
+                // todo: one displayed error per bad path, not per property
+                if (!refMug && formdesigner.allowedDataNodeReferences.indexOf(pathWithoutRoot) === -1) {
                     errors = true;
                     formdesigner.controller.form.updateError(that.FormError({
                         level: "parse-warning",
@@ -1399,6 +1402,7 @@ var MugElement = Class.$extend({
     },
     setAttr: function (attr, val) {
         // todo: replace all direct setting of element properties with this
+        var spec = this.__spec[attr];
 
         var spec = this.__spec[attr];
 
@@ -1406,6 +1410,11 @@ var MugElement = Class.$extend({
             // avoid potential duplicate references (e.g., itext items)
             if (val && typeof val === "object") {
                 val = $.extend(true, {}, val);
+            }
+
+            if (spec.uiType === formdesigner.widgets.xPathWidget) {
+                val = formdesigner.pluginManager.call(
+                    'processXPathExpression', val, this.__mug, spec);
             }
             this[attr] = val;
         }
@@ -1781,7 +1790,11 @@ var mugs = (function () {
                 }
             });
 
-            return errors;
+            var pluginErrors = _.filter(_.flatten(
+                formdesigner.pluginManager.call("getErrors", this)),
+                _.identity
+            );
+            return errors.concat(pluginErrors);
         },
         isValid: function () {
             return !this.getErrors().length;
@@ -1844,15 +1857,15 @@ var mugs = (function () {
         },
         
         getDefaultLabelItext: function (defaultValue) {
-            var formData = {};
-            formData[formdesigner.pluginManager.javaRosa.Itext.getDefaultLanguage()] = defaultValue;
-            return new ItextItem({
-                id: this.getDefaultLabelItextId(),
-                forms: [new ItextForm({
-                            name: "default",
-                            data: formData
-                        })]
+            var item = new ItextItem({
+                id: this.getDefaultLabelItextId()
             });
+            item.addForm("default");
+            item.getForm("default").setValue(
+                formdesigner.pluginManager.javaRosa.Itext.getDefaultLanguage(),
+                defaultValue
+            );
+            return item;
         },
         
         // Add some useful functions for dealing with itext.
@@ -2260,7 +2273,7 @@ var mugs = (function () {
                     visibility: 'visible',
                     editable: 'w',
                     presence: 'optional',
-                    uiType: formdesigner.widgets.droppableTextWidget
+                    uiType: formdesigner.widgets.xPathWidget
                 },
                 no_add_remove: {
                     lstring: 'Disallow Repeat Add and Remove?',
