@@ -1919,62 +1919,15 @@ formdesigner.controller = (function () {
     };
     
     that.validateAndSaveXForm = function () {
-        var getUrl = function (saveType) {
-            return saveType === 'patch' ?
-                formdesigner.patchUrl : formdesigner.saveUrl;
-        };
-        var url = getUrl(formdesigner.saveType);
-        if (!url) {
-            formdesigner.ui.setDialogInfo("Error: Cannot send form, no save url specified!",
-            'OK', function () {
-                        $ (this) .dialog("close");
-                    },
-            'Cancel', function () {
-                        $ (this) .dialog("close");
-            });
-        }
-        
         var send = function (formText, saveType) {
             var data;
             saveType = saveType || formdesigner.saveType;
+            console.log(saveType);
             $('body').ajaxStart(formdesigner.ui.showWaitingDialog);
             $('body').ajaxStop(formdesigner.ui.hideConfirmDialog);
-
-            if (saveType === 'patch') {
-                var dmp = new diff_match_patch();
-                var patch = dmp.patch_toText(
-                    dmp.patch_make(formdesigner.originalXForm, formText)
-                );
-                // abort if diff too long and send full instead
-                if (patch.length > formText.length) {
-                    saveType = 'full';
-                }
-            }
-
-            var url = getUrl(saveType);
-
-            if (saveType === 'patch') {
-                data = {
-                    patch: patch,
-                    sha1: CryptoJS.SHA1(formdesigner.originalXForm).toString()
-                };
-            } else {
-                data = {xform: formText};
-            }
-
-            var pluginData = _.filter(
-                formdesigner.pluginManager.call("getServerPOSTData"),
-                _.identity);
-
-            _.each(pluginData, function (eachData) {
-                data = _.extend(data, eachData);
-            });
-
-            saveButton.ajax({
+            
+            var options = {
                 type: "POST",
-                url: url,
-                data: JSON.stringify(data),
-                contentType: 'application/json',
                 dataType: 'json',
                 success: function (data) {
                     if (saveType === 'patch') {
@@ -1999,7 +1952,45 @@ formdesigner.controller = (function () {
                     });
                     formdesigner.originalXForm = formText;
                 }
+            };
+
+            if (saveType === 'patch') {
+                var dmp = new diff_match_patch();
+                var patch = dmp.patch_toText(
+                    dmp.patch_make(formdesigner.originalXForm, formText)
+                );
+                // abort if diff too long and send full instead
+                if (patch.length > formText.length) {
+                    saveType = 'full';
+                } else {
+                    data = {
+                        patch: patch,
+                        sha1: CryptoJS.SHA1(formdesigner.originalXForm).toString()
+                    };
+                }
+            } 
+            
+            if (saveType !== 'patch') {
+                data = {xform: formText};
+            }
+
+            var pluginData = _.filter(
+                formdesigner.pluginManager.call("getServerPOSTData"),
+                _.identity);
+
+            _.each(pluginData, function (eachData) {
+                data = _.extend(data, eachData);
             });
+
+            if (saveType === 'patch') {
+                options.contentType = 'application/json';
+                options.data = JSON.stringify(data);
+                options.url = formdesigner.patchUrl;
+            } else {
+                options.data = data;
+                options.url = formdesigner.saveUrl;
+            }
+            saveButton.ajax(options);
         };
         
         var formText = that.form.createXForm();
