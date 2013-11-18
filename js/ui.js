@@ -1622,10 +1622,6 @@ formdesigner.ui = function () {
         set_event_listeners();
 
         setup_fancybox();
-
-        formdesigner.windowManager.init();
-
-
     };
 
     return that;
@@ -1707,6 +1703,7 @@ formdesigner.launch = function (opts) {
     opts = opts || {};
     formdesigner.util.eventuality(formdesigner);
 
+    // todo: document these
     formdesigner.pluginManager = new PluginManager({
         methods: {
             'init': 'return_all',
@@ -1730,6 +1727,7 @@ formdesigner.launch = function (opts) {
             'contributeToDataElementSpec': 'process_sequentially',
             'contributeToBindElementSpec': 'process_sequentially',
             'contributeToControlElementSpec': 'process_sequentially',
+            'onQuestionIDChange': 'return_all',
             'getSections': 'return_all',
             'contributeToMainProperties': 'process_sequentially',
             'contributeToLogicProperties': 'process_sequentially',

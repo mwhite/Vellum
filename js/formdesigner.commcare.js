@@ -8,7 +8,7 @@ RegExp.escape= function(s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
 };
 
-function isRepeatDescendant(mug) {
+function getRepeatAncestor(mug) {
     while (mug) {
         if (mug.parentMug && mug.parentMug.__className === 'Repeat') {
             return true;
@@ -29,10 +29,9 @@ var saveToCaseBlock = function (mug, options) {
         commCare = formdesigner.pluginManager.commCare,
         ownActions = commCare.currentForm.actions,
         ownUpdate = ownActions.update_case.update,
-        isRepeatDesc = isRepeatDescendant(mug);
+        repeatAncestor = getRepeatAncestor(mug);
 
     block.mug = mug;
-
 
     function setOwnUpdate(newValue, oldValue, prefix) {
         if (newValue === 'name' && ownActions.open_case.condition.type !== 'never') {
@@ -100,7 +99,7 @@ var saveToCaseBlock = function (mug, options) {
             widget.updateValue();  // sync checkbox
         }
 
-        if (!isRepeatDesc) {
+        if (!repeatAncestor) {
             if (commCare._updatesOwnCase()) {
                 var label = commCare.ownCaseType + (updatesOnlyOwnCase ? "" : " (this case)");
                 addWidget(label, getSavedPropertyName(ownUpdate), setOwnUpdate);
@@ -119,7 +118,7 @@ var saveToCaseBlock = function (mug, options) {
         var tree = formdesigner.controller.form.dataTree;
         _(ownActions.subcases).each(function (subcase) {
             // wrong repeat
-            if (isRepeatDesc && 
+            if (repeatAncestor && 
                 tree.getAbsolutePath(mug).indexOf(subcase.repeat_context) !== 0)
             {
                 return;
@@ -136,6 +135,12 @@ var saveToCaseBlock = function (mug, options) {
                     if (newValue === 'name') {
                         subcase.case_name = mugPath;
                         newValue = null;
+                    }
+                    // maintain repeat_context as defined in case-config-ui-2.js
+                    // todo: what if the user wants to change the repeat that a
+                    // child case uses?
+                    if (repeatAncestor) {
+                        subcase.repeat_context = tree.getAbsolutePath(repeatAncestor);
                     }
                     setUpdate(subcase.case_properties, newValue, oldValue);
                 }
@@ -271,13 +276,6 @@ formdesigner.plugins.commCare = function (options) {
         PARENT_CASE: 'parent_case'
     };
 
-    var PROPERTY_REFTYPE_MAP = {
-        'relevant': RefType.RELEVANT,
-        //'calculate': RefType.CALCULATE, // todo
-        //'constraint'
-    
-    };
-   
     // Hardcoding stuff like this for now. We will need to hook into the xpath
     // parser or build our own here if we want to expose stuff with different
     // indices in the UI. 
@@ -485,8 +483,8 @@ formdesigner.plugins.commCare = function (options) {
         });
     };
 
-    // this transitions old preloaded case properties into being managed as
-    // setvalues by vellum
+    // these functions transitions old preloaded case properties into being managed as
+    // setvalues by vellum.
     that.afterParse = function () {
         var case_preload = that.currentForm.actions.case_preload;
         if (case_preload.condition.type === 'never') {
@@ -510,12 +508,21 @@ formdesigner.plugins.commCare = function (options) {
 
         that.currentForm.actions.case_preload.preload = {};
 
-        formdesigner.controller.form.instanceMetadata.push({
-            attributes: {
-                id: "casedb",
-                src: "jr://instance/casedb"
+        // ensure that casedb instance exists
+        var hasCasedbInstance = _.some(formdesigner.controller.form.instanceMetadata,
+            function (m) {
+                return m.id == "casedb";
             }
-        });
+        );
+        if (!hasCasedbInstance) {
+            formdesigner.controller.form.instanceMetadata.push({
+                // prevent duplicate instances
+                attributes: {
+                    id: "casedb",
+                    src: "jr://instance/casedb"
+                }
+            });
+        }
     };
 
     that.contributeToHeadXML = function (xmlWriter) {
@@ -630,6 +637,41 @@ formdesigner.plugins.commCare = function (options) {
             uiType: formdesigner.widgets.xPathWidget
         };
         return spec;
+    };
+
+    function updateDict(dict, newPath, oldPath) {
+        for (var k in dict) {
+            var path = dict[k];
+            if (dict.hasOwnProperty(k) && dict[k].indexOf(oldPath) === 0) {
+                // this is probably faster than a regex replace and avoids
+                // having to check that it's the beginning of the string
+                dict[k] = newPath + dict[k].substring(oldPath.length);
+            }
+        }
+    }
+
+    // keep in sync question paths in case updates and subcase repeat_contexts
+    that.onQuestionIDChange = function (mug, id, previous_id) {
+        var tree = formdesigner.controller.form.dataTree,
+            newPath = tree.getAbsolutePath(mug),
+            pieces = newPath.split("/"),
+            oldPath = pieces.slice(0, pieces.length - 1).concat([previous_id]).join("/"),
+            actions = that.currentForm.actions;
+
+        updateDict(actions.update_case.update, newPath, oldPath);
+
+        if (actions.open_case.name_path === oldPath) {
+            actions.open_case.name_path = newPath;
+        }
+        _(actions.subcases).each(function (subcase) {
+            updateDict(subcase.case_properties, newPath, oldPath);
+            if (subcase.repeat_context === oldPath) {
+                subcase.repeat_context = newPath;
+            }
+            if (subcase.case_name === oldPath) {
+                subcase.case_name = newPath;
+            }
+        });
     };
 
     that.getSections = function (mug) {
@@ -785,47 +827,22 @@ formdesigner.plugins.commCare = function (options) {
         return str;
     };
 
-    $(document).on('click', '.autocomplete-suggestion', function (e) {
-        e.preventDefault();
-    });
-    // handlers adapted from jstree dnd plugin
-    $(document).on("mousedown", '.autocomplete-suggestion', function (e) {
-        e.preventDefault();
-        $.vakata.dnd.drag_start(e, { 
-            jstree : false, 
-            obj : e.target
-        }, "<ins class='jstree-icon'></ins>" + $(e.target).text() );
-
-        var theme = formdesigner.ui.jstree("get_theme");
-        $.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + theme); 
-        $.vakata.dnd.helper.children("ins").attr("class","jstree-invalid");
-        that.draggedResult = e.target;
-    });
-    $(document).on("mouseenter", ".jstree-drop", function (event) {
-        if (that.draggedResult) {
-            $.vakata.dnd.helper.children("ins").attr("class","jstree-ok");
-        }
-    });
-    $(document).on("mouseleave", ".jstree-drop", function (event) {
-        if (that.draggedResult) {
-            $.vakata.dnd.helper.children("ins").attr("class","jstree-invalid");
-        }
-    });
-    $(document).on("mouseup", function (event) {
-        if(that.draggedResult && 
-           $.vakata.dnd.helper.children("ins").hasClass("jstree-ok"))
-        {
-            var ref = $(that.draggedResult).closest('.autocomplete-suggestion').text();
-            formdesigner.controller.handleDrop(
-                ref, event.target, event.clientX, event.clientY);
-        }
-        that.draggedResult = null;
-    });
 
     that.getAccordions = function () {
         if (!that._hasReferenceableProperties()) {
             return [];
         }
+
+        var $div = $("<div id='case_property_tree_container'></div>");
+        var $input = $("<input/>")
+            .attr('id', 'case_property_search')
+            .attr('name', 'case_property_search')
+            .attr('placeholder', 'Search case properties...')
+            .keyup(function () {
+                that.casePropertyTree.jstree('search', $input.val());
+            });
+        $input.appendTo($div);
+        $("<div id='case_property_tree'></div>").appendTo($div);
 
         return [{
             id: 'fd-case-properties',
@@ -837,9 +854,7 @@ formdesigner.plugins.commCare = function (options) {
                 "to create a reference to that case property.  Click on " + 
                 "a property below for more information about where it's " +
                 "created and used.",
-            content: $("<input/>")
-                .attr('id', 'case_property_search')
-                .attr('name', 'case_property_search')
+            content: $div
         }];
     };
 
@@ -851,77 +866,89 @@ formdesigner.plugins.commCare = function (options) {
         }
 
         that.draggedResult = null;
-
-        // disable traditional autocomplete behavior on click of actually filling input
-        // with the selected item (thus limiting the results to that item)
-        $.Autocomplete.prototype.select = function () {};
+       
+        // disable ugly search highlight. doing this since plugin organization
+        // of styles/includes isn't fleshed out
+        var css = document.createElement("style");
+        css.type = "text/css";
+        css.innerHTML = "a.jstree-search { color: inherit !important; }";
+        document.body.appendChild(css);
 
         $("#case_property_search").parent().attr('position', 'relative');
-        $("#case_property_search").autocomplete({
-            minChars: 0,
-            zIndex: 0,  // otherwise it overlaps XML editor
-            appendTo: $("#case_property_search").parent(),
-            lookup: (function () {
-                var lookupData = [];
-                _(that.caseProperties).map(function (properties, type) {
-                    _(properties).map(function (property) {
-                        var prefix;
-                        if (property.type === that.ownCaseType) {
-                            prefix = 'case';
-                        } else if (property.type === that.parentCaseType) {
-                            prefix = 'parent';
-                        } else {
-                            prefix = property.type;
+
+        that.casePropertyTree = $("#case_property_tree").jstree({
+            "json_data" : {
+                "data" : (function () {
+                    var data = [];
+                    _(that.caseProperties).each(function (properties, type) {
+                        var description = '';
+                        if (that.ownCaseType && that.parentCaseType) {
+                            if (type === that.ownCaseType) {
+                                description = ' (this case)';
+                            } else if (type === that.parentCaseType) {
+                                description = ' (parent case)';
+                            }
                         }
-                        lookupData.push({
-                            value:  '@' + prefix + '/' + property.name,
-                            data: property
+                        var node = {
+                            data: "Case type: " + type + description,
+                            attr: {
+                                id: "case_property_type_" + type
+                            },
+                            state: "open",
+                            children: []
+                        };
+
+                        _(properties).each(function (property) {
+                            var name = property.name;
+                            node.children.push({
+                                data: name,
+                                attr: {
+                                    id: "case_property_" + type + "_" +name
+                                },
+                                metadata: {
+                                    type: type,
+                                    name: name
+                                }
+                            });
                         });
+                        data.push(node);
                     });
-                });
-                return lookupData;
-            })(),
-            lookupFilter: function (suggestion, query, queryLowerCase) {
-                query = queryLowerCase;
-                if (query.substring(0, 1) === '@') {
-                    query = query.substring(1);
-                }
-                if (!query) {
-                    return true;
-                }
-                if (suggestion.value.indexOf(query) === 0) {
-                    return true;
-                }
 
-                var data = suggestion.data,
-                    isParent = query.indexOf("parent/") === 0,
-                    couldBeParent = "parent/".indexOf(query) === 0;
+                    // test
+                    return data.concat(data).concat(data).concat(data).concat(data);
+                })()
+            },
+            "ui" : {
+                select_limit: 1
+            },
+            "search": {
+                show_only_matches: true
+            },
+            "themes": {
+                icons: false
+            },
+            "dnd" : {
+                "drop_finish" : function(data) {
+                    var $o = $(data.o),
+                        type = $o.data('type'),
+                        name = $o.data('name'),
+                        ref;
 
-                query = isParent ? query.slice(7) : query;
-                var propertyRegex = new RegExp("(^|_|/)" + query),
-                    questionRegex = new RegExp("(^|\W)" + query);
+                    if (type === that.parentCaseType) {
+                        ref = PARENT_PRETTY_PREFIX + name;
+                    } else if (type === that.ownCaseType) {
+                        ref = CASE_UGLY_PREFIX + name;
+                    } else {
+                        // unhandled case
+                        return;
+                    }
 
-                if (isParent && data.type !== that.parentCaseType) {
-                    return false;
+                    formdesigner.controller.handleDrop(
+                        ref, data.r, data.e.clientX, data.e.clientY);
                 }
-                if (couldBeParent && data.type === that.parentCaseType) {
-                    return true;
-                }
-
-                if (propertyRegex.test(data.name)) {
-                    return true;
-                }
-
-                return _(data.sources).some(function (source) {
-                    return (propertyRegex.test(source.value) ||
-                            questionRegex.test(source.label));
-                });
-            } 
-        })
-        // don't clear results when input is unfocused
-            .unbind('blur.autocomplete')
-        // trigger initial results
-            .val(' ').keyup().val('').keyup();
+            },
+            "plugins" : [ "themes", "json_data", "ui", "dnd", "search" ]
+        });
     
     };
 };

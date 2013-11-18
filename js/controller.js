@@ -105,21 +105,40 @@ formdesigner.controller = (function () {
             _.flatten(formdesigner.pluginManager.call('getAccordions')),
             _.identity);
         _(extraAccordions).each(function (accordion) {
+            // yes, this is extremely messy
+            var $a = $("<a href='#" + accordion.content.attr('id') + "' data-toggle='collapse'>" + 
+                        accordion.title + "</a>");
             var $div = $("<div/>").attr('id', accordion.id),
                 $inner = $("<div/>").attr('id', accordion.id + '_head')
-                    .addClass('fd-head').html(accordion.title).appendTo($div),
-                $a = $("<a/>").attr('href', accordion.href)
-                    .attr('target', '_blank')
-                    .addClass('fd-help')
-                    .data('title',  accordion.title)
-                    .data('placement', 'left')
-                    .data('content', accordion.helpContent).appendTo($inner);
-                accordion.content.appendTo($div);
+                    .addClass('fd-head').appendTo($div);
+                //$helpA = $("<a/>").attr('href', accordion.href)
+                    //.attr('target', '_blank')
+                    //.addClass('fd-help')
+                    //.data('title',  accordion.title)
+                    //.data('placement', 'left')
+                    //.data('content', accordion.helpContent).appendTo($inner);
+            $a.appendTo($inner);
+            accordion.content.appendTo($div).addClass('fd-sidebar-accordion-content');
+            $div.addClass('fd-sidebar-accordion');
 
-            $('.fd-scrollable-tree').append($div);
+            $('.fd-content-left').append($div);
+            
+            $a.click(function () {
+                var $this = $(this);
+                setTimeout(function () {
+                    if ($this.hasClass('collapsed')) {
+                        $div.css('height', $inner.outerHeight());
+                    } else {
+                        $div.css('height', 300);
+                    }
+                    formdesigner.windowManager.adjustToWindow();
+                }, 500); // wait for collapse to finish. yep.
+            });
         });
 
         formdesigner.pluginManager.call('initAccordions');
+
+        formdesigner.windowManager.init();
     };
     that.initFormDesigner = initFormDesigner;
 
