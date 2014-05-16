@@ -66,7 +66,7 @@ require(["main"], function ($) {
 
 ### Options
 
-Todo
+Todo.
 
 
 Contributing
