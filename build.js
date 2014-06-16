@@ -7,7 +7,7 @@
     removeCombined: true,
     dir: 'dist',
     skipDirOptimize: true,
-    optimize: 'none',
+    optimize: 'uglify2',
     // Everything to do with CSS is handled by the require-css plugin
     optimizeCss: 'none',
     inlineText: true,

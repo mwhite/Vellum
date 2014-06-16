@@ -58,8 +58,6 @@ $ npm install
 Contributing
 ------------
 
-Make Pull Requests to the develop branch.
-
 Follow the [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript).
 
 Run tests in a browser:
@@ -72,6 +70,11 @@ Run tests headlessly (currently broken):
 ```
 $ npm install -g phantomjs
 $ npm test
+```
+
+Build optimized version:
+```
+$ make
 ```
 
 ### Testing on Heroku
