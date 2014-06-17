@@ -1,10 +1,10 @@
 define([
     'require',
-    './tree',
-    './logic',
-    './intentManager',
-    './widgets',
-    './util'
+    'vellum/tree',
+    'vellum/logic',
+    'vellum/intentManager',
+    'vellum/widgets',
+    'vellum/util'
 ], function (
     require,
     Tree,
@@ -18,7 +18,7 @@ define([
     // initially.
     var writer,
         exporter;
-    require(['./writer', './exporter'], function (w, e) {
+    require(['vellum/writer', 'vellum/exporter'], function (w, e) {
         writer = w;
         exporter = e;
     });
@@ -259,7 +259,7 @@ define([
         },
         addInstanceIfNotExists: function (attrs) {
             var hasInstance = _.any(this.instanceMetadata, function (m) {
-                return m.attributes.src == attrs.src;
+                return m.attributes.src === attrs.src;
             });
             if (!hasInstance) {
                 this.instanceMetadata.push(InstanceMetadata({
@@ -291,11 +291,12 @@ define([
             });
         },
         clearErrors: function (type, options) {
+            var filterFn = function (err) {
+                return err.level !== type;
+            };
             options = options || {};
             for (var i = 0; i < this.errors.length; i++) {
-                this.errors = this.errors.filter(function (err) {
-                    return err.level !== type;
-                });
+                this.errors = this.errors.filter(filterFn);
             }
             this.fire({
                 type: 'error-change',
@@ -326,46 +327,15 @@ define([
         isFormValid: function () {
             return this.dataTree.isTreeValid() && this.controlTree.isTreeValid();
         },
-        /**
-         * Searches through the dataTree for a mug
-         * this matches the given nodeID (e.g. mug.dataElement.nodeID)
-         *
-         * WARNING:
-         * Some Mugs (such as for example 'Items' or 'Triggers' or certain 'Group's may not have
-         * any nodeID at all (i.e. no bind element and no data element)
-         * in such cases... other methods need to be used as this method will not find a match.
-         * @param nodeID
-         */
-        getMugsByNodeID: function (nodeID) {
-            var mapFunc = function (node) {
-                if(node.isRootNode){
-                    return;
-                }
-                var mug = node.getValue(),
-                    thisDataNodeID, thisBindNodeID;
-                if (mug.dataElement) {
-                    thisDataNodeID = mug.dataElement.nodeID;
-                }
-                if (mug.bindElement){
-                    thisBindNodeID = mug.bindElement.nodeID;
-                }
-                if (!thisDataNodeID && !thisBindNodeID){
-                    return; //this mug just has no nodeID :/
-                }
-
-                if(thisDataNodeID === nodeID || thisBindNodeID === nodeID){
-                    return mug;
-                }
-            };
-            return this.dataTree.treeMap(mapFunc);
-        },
         getMugChildByNodeID: function (mug, nodeID) {
-            var mugs = this.getMugsByNodeID(nodeID),
-                siblingMugs = _.filter(mugs, function (m) {
-                    return m.parentMug === mug;
+            var parentNode = (mug ? this.dataTree.getNodeFromMug(mug)
+                                  : this.dataTree.rootNode),
+                childMugs = parentNode.getChildrenMugs(),
+                matchingIdMugs = _.filter(childMugs, function (m) {
+                    return m.dataElement.nodeID === nodeID;
                 });
-            if (siblingMugs.length) {
-                return siblingMugs[0];
+            if (matchingIdMugs.length) {
+                return matchingIdMugs[0];
             } else {
                 return null;
             }
@@ -395,6 +365,9 @@ define([
             tree.treeMap(function (node) {
                 if(node.getValue() === oldMug){
                     node.setValue(newMug);
+                    // todo: encapsulate this better with same property
+                    // references in Form.insertMug() and Form.getNodeFromMug()
+                    newMug['_node_' + treeType] = node;
                 }
             });
             newMug.parentMug = oldMug.parentMug;
@@ -500,11 +473,8 @@ define([
                 children = node ? node.getChildren() : [];  // handles data node
             return children.map(function (item) { return item.getValue();});
         },
-        duplicateMug: function (mug, options) {
-            options = options || {};
-            options.itext = options.itext || "link";
-
-            var foo = this._duplicateMug(mug, mug.parentMug, options),
+        duplicateMug: function (mug) {
+            var foo = this._duplicateMug(mug, mug.parentMug),
                 duplicate = foo[0],
                 pathReplacements = foo[1];
 
@@ -527,11 +497,9 @@ define([
          *
          * @param mug - the mugtype in the original tree to duplicate
          * @param parentMug - the mugtype in the duplicate tree to insert into
-         * @param options 
-         *          itext: 'link' (default) or 'copy'
          *        
          */
-        _duplicateMug: function (mug, parentMug, options, depth) {
+        _duplicateMug: function (mug, parentMug, depth) {
             depth = depth || 0;
             // clone mug and give everything new unique IDs
             var duplicate = this.mugTypes.make(mug.__className, this);
@@ -542,7 +510,7 @@ define([
             // clear existing event handlers for the source question
             util.eventuality(duplicate);
 
-            if (mug.bindElement && mug.bindElement.nodeID) {
+            if (depth === 0 && mug.bindElement && mug.bindElement.nodeID) {
                 var newQuestionID = this.generate_question_id(
                     mug.bindElement.nodeID
                 ); 
@@ -571,15 +539,13 @@ define([
 
             this._logicManager.updateAllReferences(duplicate);
 
-            if (options.itext === "copy") {
-                duplicate.unlinkItext();
-            }
+            duplicate.unlinkItext();
 
             var children = this.getChildren(mug),
                 pathReplacements = [];
             for (var i = 0; i < children.length; i++) {
                 pathReplacements = pathReplacements.concat(
-                    this._duplicateMug(children[i], duplicate, options, depth + 1)[1]);
+                    this._duplicateMug(children[i], duplicate, depth + 1)[1]);
             }
 
             pathReplacements.push({
@@ -649,7 +615,7 @@ define([
             if (e.property === 'nodeID' && e.element === 'dataElement') {
                 var newNameForTree = '[' + e.val +']';
                 if (e.val && (
-                    mug.__className !== "DataBindOnly" &&
+                    mug.__className === "DataBindOnly" ||
                         (!mug.controlElement || !mug.controlElement.labelItextID || 
                          (mug.controlElement.labelItextID && mug.controlElement.labelItextID.isEmpty()) ))
                 ) {
@@ -698,8 +664,8 @@ define([
                 mug.afterInsert(this, mug);
             }
         },
-        getAbsolutePath: function (mug) {
-            return this.dataTree.getAbsolutePath(mug);
+        getAbsolutePath: function (mug, excludeRoot) {
+            return this.dataTree.getAbsolutePath(mug, excludeRoot);
         },
         getMugByUFID: function (ufid) {
             return (this.dataTree.getMugFromUFID(ufid) ||

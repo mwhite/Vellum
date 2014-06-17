@@ -7,14 +7,13 @@
 define([
     'underscore',
     'jquery',
-    'tpl!./templates/edit_source',
-    'tpl!./templates/language_selector',
-    'tpl!./templates/control_group',
-    'text!./templates/button_remove.html',
-    './uploader',
-    './widgets',
-    './util',
-    './core'
+    'tpl!vellum/templates/edit_source',
+    'tpl!vellum/templates/language_selector',
+    'tpl!vellum/templates/control_group',
+    'text!vellum/templates/button_remove.html',
+    'vellum/widgets',
+    'vellum/util',
+    'vellum/core'
 ], function (
     _,
     $,
@@ -22,7 +21,6 @@ define([
     language_selector,
     control_group,
     button_remove,
-    uploader,
     widgets,
     util
 ) {
@@ -41,6 +39,7 @@ define([
         this.itextModel = options.itextModel;
     }
     ItextItem.prototype = {
+        // todo: not do this
         clone: function () {
             return this;
         },
@@ -183,7 +182,7 @@ define([
         
         this.languages = [];
         this.items = [];
-    };
+    }
 
     ItextModel.prototype = {
         getLanguages: function () {
@@ -577,9 +576,9 @@ define([
                 isItextPresent;
             isItextPresent = itextItem && (function () {
                 var currentForms = itextItem.getForms();
-                for (var form, f = 0; form = currentForms[f]; f++) {
-                    for (var lang, l = 0; lang = widget.langs[l]; l++) {
-                        if (form.getValue(lang)) {
+                for (var i = 0; i < currentForms.length; i++) {
+                    for (var j = 0; j < widget.langs.length; j++) {
+                        if (currentForms[i].getValue(widget.langs[j])) {
                             return true;
                         }
                     }
@@ -715,7 +714,7 @@ define([
                     $btn.prepend($('<i />').addClass(iconClass).after(" "));
                 }
 
-                if (block.activeForms.indexOf(form) != -1) {
+                if (block.activeForms.indexOf(form) !== -1) {
                     $btn.addClass('disabled');
                 }
                 $buttonGroup.append($btn);
@@ -738,7 +737,6 @@ define([
                 var $modal, $newItemForm, $newItemInput;
                 $modal = mug.form.vellum.generateNewModal("New Content Type", [
                     {
-                        id: newItextBtnId,
                         title: "Add",
                         cssClasses: newItextBtnClass + " disabled ",
                         attributes: {
@@ -756,8 +754,8 @@ define([
                     var currentValue = $(this).val(),
                         $addButton = mug.form.vellum.$f.find('.' + newItextBtnClass);
                     if (!currentValue || 
-                        RESERVED_ITEXT_CONTENT_TYPES.indexOf(currentValue) != -1 || 
-                        block.activeForms.indexOf(currentValue) != -1) 
+                        RESERVED_ITEXT_CONTENT_TYPES.indexOf(currentValue) !== -1 || 
+                        block.activeForms.indexOf(currentValue) !== -1) 
                     {
                         $addButton
                             .addClass('disabled')
@@ -943,8 +941,9 @@ define([
                     widget.setPlaceholder(defaultLangValue);
                 }
 
-                if (!widget.isDefaultLang
-                    && (defaultLangValue === currentLangValue) || !currentLangValue) {
+                if (!widget.isDefaultLang && 
+                    (defaultLangValue === currentLangValue) || !currentLangValue) 
+                {
                     widget.setValue("");
                 } else {
                     widget.setValue(currentLangValue);
@@ -995,15 +994,16 @@ define([
 
         if (!widget.isDefaultLang) {
             widget.mug.on('defaultLanguage-itext-changed', function (e) {
-                if (e.form == widget.form && e.itextType == widget.itextType) {
+                if (e.form === widget.form && e.itextType === widget.itextType) {
                     var itextItem = widget.getItextItem(),
                         defaultLangValue,
                         currentLangValue;
                     defaultLangValue = itextItem.getValue(widget.form, widget.defaultLang);
                     currentLangValue = itextItem.getValue(widget.form, widget.language);
                     widget.setPlaceholder(e.value);
-                    if ((currentLangValue === e.prevValue && !widget.getValue())
-                        || !currentLangValue) {
+                    if ((currentLangValue === e.prevValue && !widget.getValue()) || 
+                        !currentLangValue) 
+                    {
                         // Make sure all the defaults keep in sync.
                         widget.setItextFormValue(e.value);
                     }
@@ -1129,13 +1129,13 @@ define([
             iID = cells[0];
 
             for(j = 0; j < exportCols.length; j++) {
-                var form = exportCols[j];
+                var formName = exportCols[j];
                 for(k = 0; k < languages.length; k++) {
                     if(cells[1 + j * languages.length + k]) {
                         lang = languages[k];
                         val = cells[1 + j * languages.length + k];
 
-                        Itext.getOrCreateItem(iID).getOrCreateForm(form).setValue(lang, val);
+                        Itext.getOrCreateItem(iID).getOrCreateForm(formName).setValue(lang, val);
                     }
                 }
             }
@@ -1167,12 +1167,12 @@ define([
             var images = getItemFormValues(item, languages, forms[2]);
             var videos = getItemFormValues(item, languages, forms[3]);
 
-            var row = [item.id, questions, audios, images, videos]
+            var row = [item.id, questions, audios, images, videos];
             return row.join("\t");
         }
 
         function makeHeadings(languages, exportCols) {
-            var header_row = ["label"]
+            var header_row = ["label"];
             for(i = 0; i < exportCols.length; i++) {
                 for(j=0; j < languages.length; j++) {
                     header_row.push(exportCols[i] + '-' + languages[j]);
@@ -1301,9 +1301,13 @@ define([
         // parse Itext Block and populate itext model
         loadXML: function (xmlString) {
             var _this = this,
-                langs = this.opts().javaRosa.langs;
+                langs = this.opts().javaRosa.langs,
+                Itext;
 
             this.data.javaRosa.Itext = Itext = new ItextModel();
+            Itext.on('change', function () {
+                _this.data.core.saveButton.fire('change');
+            });
 
             function eachLang() {
                 var el = $(this), defaultExternalLang;
@@ -1684,7 +1688,7 @@ define([
                 {
                     title: "Update Translations",
                     cssClasses: "btn-primary",
-                    action: function (done) {
+                    action: function () {
                         parseXLSItext($textarea.val(), Itext);
                         $modal.modal('hide');
                         done();

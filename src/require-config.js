@@ -7,13 +7,13 @@ define(['module'], function (module) {
     // does RequireJS provide an API that would allow us to get this
     // programmatically?
     var MAIN_COMPONENTS = [
-        './core',
-        './ignoreButRetain',
-        './itemset',
-        './javaRosa',
-        './lock',
-        './uploader',
-        './window'
+        'vellum/core',
+        'vellum/ignoreButRetain',
+        'vellum/itemset',
+        'vellum/javaRosa',
+        'vellum/lock',
+        'vellum/uploader',
+        'vellum-window'
     ];
 
     // not working correctly for local modules
@@ -42,35 +42,36 @@ define(['module'], function (module) {
     // Prepends baseUrl to appropriate paths in the config, based on the
     // location of this file.
     function makeAbsolute(config) {
+        var j, k, i, l;
         if (config.paths) {
-            for (var j in config.paths) {
+            for (j in config.paths) {
                 config.paths[j] = baseUrl + config.paths[j];
             }
         }
         if (config.map) {
-            for (var k in config.map) {
-                for (var l in config.map[k]) {
+            for (k in config.map) {
+                for (l in config.map[k]) {
                     config.map[k][l] = baseUrl + config.map[k][l];
                 }
             }
         }
         if (config.shim) {
-            for (var k in config.shim) {
+            for (k in config.shim) {
                 var deps = config.shim[k].deps;
                 if (!deps) continue;
-                for (var i = 0; i < deps.length; i++) {
+                for (i = 0; i < deps.length; i++) {
                     deps[i] = deps[i].replace('!', '!' + baseUrl);
                 }
             }
         }
         if (config.packages) {
-            for (var i = 0; i < config.packages.length; i++) {
+            for (i = 0; i < config.packages.length; i++) {
                 config.packages[i].location = baseUrl + config.packages[i].location;
             }
         }
         if (config.bundles) {
             var bundles = {};
-            for (var k in config.bundles) {
+            for (k in config.bundles) {
                 bundles[baseUrl + k] = config.bundles[k];
             }
             config.bundles = bundles;
@@ -87,13 +88,13 @@ define(['module'], function (module) {
 
         config = makeAbsolute(config);
 
-        //console.log(config);
+        console.log(config);
         oldConfig.call(requirejs, config);
         requirejs.config = oldConfig;
     };
 
     requirejs.config({
-        waitSeconds: 60,
+        waitSeconds: 3,
         // For some reason when using the map config as suggested by some of the
         // plugins' documentation, and only when including vellum in another
         // app, it tries to get requirejs-promise instead of
@@ -119,12 +120,19 @@ define(['module'], function (module) {
                 name: 'tpl',
                 location: '../bower_components/requirejs-tpl',
                 main: 'tpl.js'
+            },
+            {
+                name: 'json',
+                location: '../bower_components/requirejs-plugins/src',
+                main: 'json.js'
             }
         ],
         less: {
             logLevel: 1
         },
         paths: {
+            'vellum': '.',
+            
             'classy': '../bower_components/classy/classy',
             'codemirror': '../lib/codemirror/xml',
             'codemirrorBase': '../lib/codemirror/codemirror',
@@ -279,32 +287,35 @@ define(['module'], function (module) {
             // Components (and their dependencies) that can be requested
             // asynchronously after Vellum has already finished loading, because
             // they're not necessary for initial operation.
-            {
-                create: true,
-                name: 'deferred-components',
-                include: [
-                    // core
-                    'codemirror',
-                    'diff-match-patch',
-                    'CryptoJS',
-                    './expressionEditor',
 
-                    // uploader
-                    'file-uploader',
+            // At the moment, this bundle doesn't get used as expected.
+            //{
+                //create: true,
+                //name: 'deferred-components',
+                //include: [
+                    //// core
+                    //'codemirror',
+                    //'diff-match-patch',
+                    //'CryptoJS',
+                    //'vellum/expressionEditor',
 
-                    // form
-                    './writer',
-                    './exporter'
-                ],
-                exclude: [
-                    'exclude',
-                    'global-deps',
-                    // required by things other than the expression editor, ensure
-                    // that it's not bundled here, otherwise separate bundles is
-                    // useless
-                    'xpath'
-                ]
-            },
+                    //// uploader
+                    //'file-uploader',
+
+                    //// form
+                    //'vellum/writer',
+                    //'vellum/exporter'
+                //],
+                //exclude: [
+                    //'exclude',
+                    //'global-deps',
+                    //// required by things other than the expression editor, ensure
+                    //// that they're not bundled here, otherwise separate bundles
+                    //// is useless
+                    //'xpath',
+                    //'vellum/util'
+                //]
+            //},
             // Local dependencies that don't change often, except for new ones being
             // added.
             {
@@ -317,11 +328,14 @@ define(['module'], function (module) {
                     'jquery.bootstrap-popout',
                     'jquery.bootstrap-better-typeahead',
                     'save-button',
+
+                    'text',
+                    'tpl'
                 ],
                 exclude: [
                     'exclude',
                     'global-deps', 
-                    'deferred-components'
+                    //'deferred-components'
                 ]
             },
             // Everything else except main.
@@ -332,9 +346,11 @@ define(['module'], function (module) {
                 exclude: [
                     'exclude',
                     'global-deps', 
-                    'deferred-components', 
+                    //'deferred-components', 
                     'local-deps'
                 ],
+                // couldn't get it working with including main itself in the
+                // built file
                 excludeShallow: [
                     'main'
                 ]
@@ -353,7 +369,7 @@ define(['module'], function (module) {
             define('jquery.bootstrap', [], function () {});
         }
         if (jQuery.fn.popout) {
-            define('jquery.popout', [], function () {});
+            define('jquery.bootstrap-popout', [], function () {});
         }
 
         if (jQuery.fn.datepicker) {

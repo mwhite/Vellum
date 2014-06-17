@@ -1,6 +1,6 @@
 define([
-    './widgets',
-    './util',
+    'vellum/widgets',
+    'vellum/util',
     'classy',
     'underscore',
 ], function (
@@ -57,6 +57,7 @@ define([
             }
 
             // avoid potential duplicate references (e.g., itext items)
+            // todo: callers should probably handle this instead
             if (val && typeof val === "object") {
                 if ($.isPlainObject(val)) {
                     val = $.extend(true, {}, val);
@@ -479,25 +480,11 @@ define([
             return !this.getErrors().length;
         },
         getDefaultItextRoot: function () {
-            var nodeID, parent;
-            if (this.bindElement) { //try for the bindElement nodeID
-                nodeID = this.bindElement.nodeID;
-            } else if (this.dataElement) {
-                // if nothing, try the dataElement nodeID
-                nodeID = this.dataElement.nodeID;
-            } else if (this.__className === "Item") {
-                // if it's a choice, generate based on the parent and value
-                parent = this.parentMug;
-                if (parent) {
-                    nodeID = parent.getDefaultItextRoot() + "-" + this.controlElement.defaultValue;
-                }
-            } 
-            if (!nodeID) {
-                // all else failing, make a new one
-                // todo: return null, handle in callers
-                nodeID = this.form.generate_item_label();
+            if (this.__className === "Item") {
+                return this.parentMug.getDefaultItextRoot() + "-" + this.controlElement.defaultValue;
+            } else {
+                return this.form.getAbsolutePath(this, true).slice(1);
             }
-            return nodeID;
         },
         
         getDefaultLabelItextId: function () {
@@ -673,15 +660,23 @@ define([
        
             return rootId + nodeId + "-" + itextType;
         },
-        setItextId: function (propertyPath, id) {
-            var oldItext = this.getPropertyValue(propertyPath),
+        setItextId: function (propertyPath, id, unlink) {
+            var itext = this.getPropertyValue(propertyPath),
                 pieces = propertyPath.split('/');
-            if (id !== oldItext.id) {
-                oldItext.id = id;
+
+            if (id !== itext.id) {
+                if (unlink) {
+                    itext = $.extend(true, {}, itext);
+                    this.form.vellum.data.javaRosa.Itext.addItem(itext);
+                }
+
+                itext.id = id;
+                // Is this necessary, since itext is a reference?
+                // It probably triggers handlers.
                 this.setPropertyValue(
                     pieces[0], 
                     pieces[1],
-                    oldItext,
+                    itext,
                     this
                 );
             }
@@ -697,7 +692,7 @@ define([
                 // items don't have a bindElement
                 if (val && val.id) {
                     var id = _this.getItextAutoID(path.split('/')[1]);
-                    _this.setItextId(path, id);
+                    _this.setItextId(path, id, true);
                 }
             });
         }

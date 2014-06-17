@@ -1,8 +1,8 @@
 // todo: make this a proper plugin
 
 define([
-    './mugs',
-    './widgets',
+    'vellum/mugs',
+    'vellum/widgets',
     'underscore',
     'jquery'
 ], function (
@@ -114,7 +114,7 @@ define([
                     if (!mug || node.isRootNode) {
                         return null;
                     }
-                    if (mug.bindElement && mug.bindElement.dataType == 'intent') {
+                    if (mug.bindElement && mug.bindElement.dataType === 'intent') {
                         return mug;
                     } else {
                         return null;

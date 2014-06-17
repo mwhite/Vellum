@@ -58,11 +58,7 @@ $ npm install
 Contributing
 ------------
 
-### Coding style
-
 Follow the [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript).
-
-### Tests
 
 Run tests in a browser:
 ```
@@ -74,6 +70,11 @@ Run tests headlessly (currently broken):
 ```
 $ npm install -g phantomjs
 $ npm test
+```
+
+Build optimized version:
+```
+$ make
 ```
 
 ### Testing on Heroku
@@ -95,3 +96,7 @@ The latest master is also deployed to
 [vellum-master.herokuapp.com](http://vellum-master.herokuapp.com) using
 [drone.io](http://drone.io).  See
 [here](https://drone.io/github.com/mwhite/Vellum) for a list of builds.
+
+![](deps.png)
+
+Dependency graph, minus Underscore, jQuery, and util

@@ -19,12 +19,10 @@
  * https://docs.google.com/document/d/12see6m3Lr6nVVgjfstS3oS6Vc1UT7l4bqYNRtDB-GXQ/
  */
 define([
-    'require',
     'underscore',
     'jquery',
-    './core'
+    'vellum/core'
 ], function (
-    require,
     _,
     $
 ) {
@@ -76,7 +74,7 @@ define([
             ref = $node.attr('ref'),
             tagName = $node.prop('tagName').toLowerCase();
 
-        if (tagName == 'setvalue') {
+        if (tagName === 'setvalue') {
             return '[event="' + $node.attr('event') + '"]' +
                    '[ref="' + ref + '"]';
         } else if (nodeset) {
@@ -179,7 +177,7 @@ define([
                 // for node positions referencing a node with a label ID (e.g.,
                 // first label inside a group) to be correctly updated.  Not that
                 // bad of an assumption.
-                idRegex = new RegExp('(\'|")' + oldID + '(\-label)?(\'|")', 'g');
+                idRegex = new RegExp('(\'|")' + oldID + '(-label)?(\'|")', 'g');
 
             var replaceIdInSelector = function (val) {
                 var replaced = false;

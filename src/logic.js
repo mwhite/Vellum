@@ -1,5 +1,5 @@
 define([
-    './util',
+    'vellum/util',
     'xpath',
     'xpathmodels'
 ], function (
@@ -81,7 +81,7 @@ define([
     LogicManager.prototype = {
         clearReferences: function (mug, property) {
             this.all = this.all.filter(function (elem) { 
-                return elem.mug != mug.ufid || elem.property != property;
+                return elem.mug !== mug.ufid || elem.property !== property;
             });
         },
         addReferences: function (mug, property) {
@@ -106,7 +106,7 @@ define([
                     pathWithoutRoot = pathString.substring(1 + pathString.indexOf('/', 1)),
                     refMug = _this.form.getMugByPath(pathString);
 
-                if (!refMug && this.opts.allowedDataNodeReferences.indexOf(pathWithoutRoot) === -1) {
+                if (!refMug && _this.opts.allowedDataNodeReferences.indexOf(pathWithoutRoot) === -1) {
                     error.message.push("The question '" + mug.bindElement.nodeID + 
                         "' references an unknown question " + path.toXPath() + 
                         " in its " + mug.getPropertyDefinition(property).lstring + ".");

@@ -1,14 +1,12 @@
 define([
-    'require',
     'jquery',
     'xpath',
     'xpathmodels',
-    'tpl!./templates/xpath_validation_errors',
-    'tpl!./templates/xpath_expression',
-    'tpl!./templates/xpath',
-    'less!./less-style/xpath-editor'
+    'tpl!vellum/templates/xpath_validation_errors',
+    'tpl!vellum/templates/xpath_expression',
+    'tpl!vellum/templates/xpath',
+    'less!vellum/less-style/xpath-editor'
 ], function (
-    require,
     $,
     xpath,
     xpathmodels,
@@ -24,9 +22,9 @@ define([
         toString: function(op, left, right) {
             // make sure we wrap the vals in parens in case they were necessary
             // todo, construct manually, and validate individual parts.
-            return "(" + left + ") "
-                + xpathmodels.expressionTypeEnumToXPathLiteral(op)
-                + " (" + right + ")";
+            return "(" + left + ") " + 
+                xpathmodels.expressionTypeEnumToXPathLiteral(op) + 
+                " (" + right + ")";
         },
         typeLeftRight: function(expOp) {
             return expOp;
@@ -37,7 +35,7 @@ define([
             return op + "(" + left + ", " + right + ")";
         },
         typeLeftRight: function(expOp) {
-            if (expOp.args.length != 2) return false;
+            if (expOp.args.length !== 2) return false;
             return {
                 type: expOp.id,
                 left: expOp.args[0],
@@ -58,7 +56,6 @@ define([
     addOp(FunctionHandler, "selected", "has selected value");
 
     function showXPathEditor($div, options) {
-        console.error($div, options);
         var that = {};
 
         var editorContent = $div;
@@ -235,7 +232,7 @@ define([
                     // if it's a joining op the first element has to be
                     // an expression and the second must be a valid op
                     // isExpressionOp(parsedExpression.right))
-                    if (joiningOp && parsedExpression.type != joiningOp) {
+                    if (joiningOp && parsedExpression.type !== joiningOp) {
                         // we tried to add a joining op that was different from
                         // what we were already working on. Fail.
                         return failAndClear();

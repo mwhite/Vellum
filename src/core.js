@@ -6,22 +6,23 @@ define([
     'underscore',
     'xpathmodels',
     'jquery',
-    'text!./templates/main.html',
-    'tpl!./templates/question_type_group',
-    'tpl!./templates/edit_source',
-    'tpl!./templates/control_group_stdInput',
-    'tpl!./templates/question_fieldset',
-    'tpl!./templates/question_type_changer',
-    'tpl!./templates/question_toolbar',
-    'tpl!./templates/alert_global',
-    'tpl!./templates/modal_content',
-    'tpl!./templates/modal_button',
-    './mugs',
-    './widgets',
-    './parser',
-    './base',
-    'less!./less-style/main',
+    'text!vellum/templates/main.html',
+    'tpl!vellum/templates/question_type_group',
+    'tpl!vellum/templates/edit_source',
+    'tpl!vellum/templates/control_group_stdInput',
+    'tpl!vellum/templates/question_fieldset',
+    'tpl!vellum/templates/question_type_changer',
+    'tpl!vellum/templates/question_toolbar',
+    'tpl!vellum/templates/alert_global',
+    'tpl!vellum/templates/modal_content',
+    'tpl!vellum/templates/modal_button',
+    'vellum/mugs',
+    'vellum/widgets',
+    'vellum/parser',
+    'vellum/base',
+    'less!vellum/less-style/main',
     'jquery.jstree',
+    'jquery.bootstrap',
     'jquery.fancybox',  // only thing we use fancybox for is its spinner, no actual display of anything
     'jquery-ui'  // used for buttons in Edit Source XML, and dialogs
 ], function (
@@ -59,7 +60,7 @@ define([
         'codemirror',
         'diff-match-patch',
         'CryptoJS',
-        './expressionEditor',
+        'vellum/expressionEditor',
     ], function (a, b, c) {
         CodeMirror = a;
         diff_match_patch = b;
@@ -699,7 +700,7 @@ define([
                             refIsData = target.attr('rel') === 'DataBindOnly',
                             nodeIsData = source.attr('rel') === 'DataBindOnly';
 
-                        if (refIsData + nodeIsData == 1) {
+                        if (Number(refIsData) + Number(nodeIsData) === 1) {
                             return false;
                         }
 
@@ -955,14 +956,14 @@ define([
                 "changes before continuing.");
             return false;
         } else if (duplicate) {
-            var verb = duplicateIsForMove ? 'would be' : 'is',
+            var verb = duplicateIsForMove ? 'would have' : 'has',
                 newQuestionId = this.data.core.form.generate_question_id(duplicate);
 
             this.alert(
                 "Duplicate Question ID",
-                "'" + duplicate + "' " + verb + " the same Question ID as another question " +
-                "belonging to the same parent question. Please change '" + duplicate +
-                "' to a unique Question ID before continuing.", 
+                "'" + duplicate + "' " + verb + " the same Question ID as " +
+                "another question in the same group. Please change '" + 
+                duplicate + "' to a unique Question ID before continuing.",
                 [
                     {
                         title: "Fix Manually",
@@ -1203,8 +1204,8 @@ define([
             // check for control element because we want data nodes to be a flat
             // list at bottom.
             var mug = dataNodeList[i],
-                refMug = mug.parentMug && mug.controlElement
-                    ? mug.parentMug : null;
+                refMug = mug.parentMug && mug.controlElement ? 
+                    mug.parentMug : null;
             _this.createQuestion(mug, refMug, 'into');
         }
         this.setAllTreeValidationIcons();
@@ -1326,7 +1327,10 @@ define([
     };
     
     fn.displayMugProperties = function (mug) {
-        var $props = this.$f.find('.fd-question-properties');
+        var $props = this.$f.find('.fd-question-properties'),
+            _getWidgetClassAndOptions = function (property) {
+                return getWidgetClassAndOptions(property, mug);
+            };
         this.$f.find('.fd-default-panel').addClass('hide');
 
         /* update display */
@@ -1344,9 +1348,7 @@ define([
 
             section.mug = mug;
             section.properties = _(section.properties)
-                .map(function (property) {
-                    return getWidgetClassAndOptions(property, mug);
-                })
+                .map(_getWidgetClassAndOptions)
                 .filter(_.identity);
            
             if (section.properties.length) {
@@ -1398,7 +1400,7 @@ define([
         };
         $editor.show();
 
-        require(['./expressionEditor'], function (expressionEditor) {
+        require(['vellum/expressionEditor'], function (expressionEditor) {
             expressionEditor.showXPathEditor(
                 _this.$f.find('.fd-xpath-editor-content'), options);
         });
@@ -1406,7 +1408,9 @@ define([
 
     fn.alert = function (title, message, buttons) {
         buttons = buttons || [];
-        if (this.data.core.isAlertVisible) return;
+        if (this.data.core.isAlertVisible) {
+            return;
+        }
 
         var _this = this;
         this.data.core.isAlertVisible = true;
@@ -1507,8 +1511,7 @@ define([
         $baseToolbar.find('.fd-button-copy').click(function () {
             _this.ensureCurrentMugIsSaved(function () {
                 var duplicate = _this.data.core.form.duplicateMug(
-                    _this.getCurrentlySelectedMug(),
-                    {itext: 'copy'});
+                    _this.getCurrentlySelectedMug());
 
                 _this.jstree("deselect_all")
                     .jstree("select_node", '#' + duplicate.ufid);
@@ -1596,7 +1599,7 @@ define([
     fn.send = function (formText, saveType) {
         var _this = this,
             opts = this.opts().core,
-            data;
+            patch, data;
         saveType = saveType || opts.saveType;
 
         var url = saveType === 'patch' ?  opts.patchUrl : opts.saveUrl;
@@ -1610,7 +1613,7 @@ define([
 
         if (saveType === 'patch') {
             var dmp = new diff_match_patch();
-            var patch = dmp.patch_toText(
+            patch = dmp.patch_toText(
                 dmp.patch_make(this.data.core.lastSavedXForm, formText)
             );
             // abort if diff too long and send full instead
@@ -1693,7 +1696,7 @@ define([
                 properties: this.getMainProperties(),
                 help: {
                     title: "Basic",
-                    text: "<p>The <strong>Question ID</strong> is a unique identifier for a question. " +
+                    text: "<p>The <strong>Question ID</strong> is an internal identifier for a question. " +
                         "It does not appear on the phone. It is the name of the question in data exports.</p>" +
                         "<p>The <strong>Label</strong> is text that appears in the application. " +
                         "This text will not appear in data exports.</p> " +

@@ -1,5 +1,5 @@
 define([
-    'text!langCodes',
+    'json!langCodes',
     'jquery',
     'jquery.bootstrap-popout'
 ], function (
@@ -31,7 +31,7 @@ define([
     var that = {};
 
     that.langCodeToName = {};
-    _.each(JSON.parse(langCodes), function (lang) {
+    _.each(langCodes, function (lang) {
         that.langCodeToName[lang.code] = lang.name;
     });
 
@@ -128,48 +128,7 @@ define([
     };
     that.mergeArray = mergeArray;
 
-    /**
-     * Given a (nodeset or ref) path, will figure out what the implied NodeID is.
-     * @param path
-     */
-    function getNodeIDFromPath (path) {
-        if (!path) {
-            return null;
-        }
-        var arr = path.split('/');
-        return arr[arr.length-1];
-    }
-    that.getNodeIDFromPath = getNodeIDFromPath;
 
-    /**
-     * Figures out what the xpath is of a controlElement
-     * by looking at the ref or nodeset attributes.
-     * @param el - a jquery selector or DOM node of an xforms controlElement.
-     * @return - a string of the ref/nodeset value
-     */
-    function getPathFromControlElement (el) {
-        if(!el){
-            return null;
-        }
-        el = $(el); //make sure it's jquerified
-        var path = el.attr('ref');
-        if(!path){
-            path = el.attr('nodeset');
-        }
-        return path || null;
-    }
-    that.getPathFromControlElement = getPathFromControlElement;
-
-
-    that.getAttributes = function (element) {
-        var attributes = $(element)[0].attributes,
-            attrMap = {};
-
-        for (var i = 0; i < attributes.length; i++) {
-            attrMap[attributes[i].nodeName] = attributes[i].nodeValue;
-        }
-        return attrMap;
-    }; 
     
     //Simple Event Framework
     //Just run your object through this function to make it event aware
@@ -237,7 +196,7 @@ define([
 		for (i = 0; i < 36; i++) {
 			if (!uuid[i]) {
 				r = Math.floor((Math.random()*16));
-				uuid[i] = CHARS[(i == 19) ? (r & 0x3) | 0x8 : r & 0xf];
+				uuid[i] = CHARS[(i === 19) ? (r & 0x3) | 0x8 : r & 0xf];
 			}
 		}
 		return uuid.toString().replace(/,/g,'');
@@ -261,24 +220,6 @@ define([
         return list.map(cleanVal).join("\t");
     };
     
-    /**
-     * Parses the required attribute string (expecting either "true()" or "false()" or nothing
-     * and returns either true, false or null
-     * @param attrString - string
-     */
-    that.parseBoolAttributeValue = function (attrString) {
-        if (!attrString) {
-            return null;
-        }
-        var str = attrString.toLowerCase().replace(/\s/g, '');
-        if (str === 'true()') {
-            return true;
-        } else if (str === 'false()') {
-            return false;
-        } else {
-            return null;
-        }
-    };
 
     /**
      * Converts true to 'true()' and false to 'false()'. Returns null for all else.

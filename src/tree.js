@@ -1,5 +1,5 @@
 define([
-    './util',
+    'vellum/util',
     'underscore'
 ], function (
     util,
@@ -51,26 +51,15 @@ define([
 
             this.children.splice(index, 0, node);
         },
-        /**
-         * Given a mug, finds the node that the mug belongs to.
-         * if it is not the current node, will recursively look through 
-         * children node (depth first search)
-         */
-        getNodeFromValue: function (valueOrFn) {
-            if (valueOrFn === null) {
-                return this.rootNode;
-            }
-            var valueIsFn = _.isFunction(valueOrFn),
-                retVal,
-                thisVal = this.getValue();
+        getSingleMatchingNode: function (fn) {
+            var thisVal = this.getValue(),
+                retVal;
 
-            if ((!valueIsFn && thisVal === valueOrFn) ||
-                (valueIsFn && valueOrFn(thisVal)))
-            {
+            if (fn(thisVal)) {
                 return this;
             } else {
                 for (var i = 0; i < this.children.length; i++) {
-                    retVal = this.children[i].getNodeFromValue(valueOrFn);
+                    retVal = this.children[i].getSingleMatchingNode(fn);
                     if (retVal) {
                         return retVal;
                     }
@@ -78,11 +67,10 @@ define([
             }
             return null; //we haven't found what we're looking for
         },
-        getNodeFromMug: function (mug) {
-            return this.getNodeFromValue(mug);
-        },
+        // todo: store nodes as a data-attribute in JSTree so this doesn't have
+        // to walk the whole tree
         getMugFromUFID: function (ufid) {
-            var node = this.getNodeFromValue(function (value) {
+            var node = this.getSingleMatchingNode(function (value) {
                 return value && value.ufid === ufid;
             });
             
@@ -232,31 +220,16 @@ define([
          * Will return null if nothing is found.
          */
         getNodeFromMug: function (mug) {
-            return this.rootNode.getNodeFromMug(mug);
+            // gets set in insertMug() and Form.replaceMug()
+            return mug['_node_' + this.treeType];
         },
-        /**
-         * Removes a node (and all it's children) from the tree (regardless of where it is located in the
-         * tree) and returns it.
-         *
-         * If no such node is found in the tree (or node is null/undefined)
-         * null is returned.
-         */
         _removeNodeFromTree: function (node) {
-            if (!node) {
-                return null;
-            }
-            if (!this.getNodeFromMug(node.getValue())) {
-                return null;
-            } //node not in tree
             var parent = this.getParentNode(node);
             if (parent) {
                 parent.removeChild(node);
                 this.fire({
                     type: 'change'
                 });
-                return node;
-            } else {
-                return null;
             }
         },
         /**
@@ -275,12 +248,16 @@ define([
          */
         insertMug: function (mug, position, refMug) {
             var refNode = refMug ? this.getNodeFromMug(refMug) : this.rootNode,
-                refNodeSiblings, refNodeIndex, refNodeParent, node;
+                node = this.getNodeFromMug(mug),
+                refNodeSiblings, refNodeIndex, refNodeParent;
 
-            //remove it from tree if it already exists
-            node = this._removeNodeFromTree(this.getNodeFromMug(mug)); 
-            if (!node) {
+            if (node) {
+                this._removeNodeFromTree(node); 
+            } else {
                 node = new Node(null, mug);
+                // store a reference to node in order to make getNodeFromMug()
+                // lookup fast 
+                mug['_node_' + this.treeType] = node;
             }
 
             refNodeParent = this.getParentNode(refNode);
@@ -317,31 +294,23 @@ define([
                 mug: mug
             });
         },
-        /**
-         * returns the absolute path, in the form of a string separated by slashes ('/nodeID/otherNodeID/finalNodeID'),
-         * the nodeID's are those given by the Mugs (i.e. the node value objects) according to whether this tree is a
-         * 'data' (DataElement) tree or a 'bind' (BindElement) tree.
-         *
-         * @param nodeOrmug - can be a tree Node or a mug that is a member of this tree (via a Node)
-         */
-        getAbsolutePath: function (mug) {
+        getAbsolutePath: function (mug, excludeRoot) {
             var node = this.getNodeFromMug(mug),
                 output, nodeParent;
             if (!node) {
-                // todo: throw exception instead
-                //                console.log('Cant find path of Mug that is not present in the Tree!');
                 return null;
             }
             nodeParent = this.getParentNode(node);
             output = '/' + node.getID();
 
             while (nodeParent) {
-                output = '/' + nodeParent.getID() + output;
+                if (!nodeParent.isRootNode || !excludeRoot) {
+                    output = '/' + nodeParent.getID() + output;
+                }
                 if (nodeParent.isRootNode) {
                     break;
                 }
                 nodeParent = this.getParentNode(nodeParent);
-
             }
 
             return output;
@@ -353,12 +322,7 @@ define([
          * If the Mug is successfully removed, returns that Mug.
          */
         removeMug: function (mug) {
-            var node = this.getNodeFromMug(mug);
-            if (!mug || !node) {
-                return;
-            }
-            this._removeNodeFromTree(node);
-            return node;
+            this._removeNodeFromTree(this.getNodeFromMug(mug));
         },
         /**
          * Given a UFID searches through the tree for the corresponding Mug and returns it.
