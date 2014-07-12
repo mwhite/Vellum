@@ -78,11 +78,18 @@
 
       <script src="node_modules/mocha/mocha.js"></script>
 
-      <script src="bower_components/requirejs/require.js"
-        data-cover data-main="tests/main">
+      <script src="bower_components/requirejs/require.js" data-cover data-main="tests/main">
       </script>
 
       <script src="bower_components/blanket/dist/qunit/blanket.js"></script>
-      <script type="text/javascript" src="bower_components/blanket/src/adapters/mocha-blanket.js"></script>
+      <script src="bower_components/blanket/src/adapters/mocha-blanket.js"></script>
+
+      <script>
+        window.PHANTOMJS = window.PHANTOMJS || window.mochaPhantomJS;
+        if (PHANTOMJS) {
+          blanket.options("reporter", "../node_modules/grunt-blanket-mocha/support/grunt-reporter.js");
+        }
+      </script>
+
   </body>
 </html>
