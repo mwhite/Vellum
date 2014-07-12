@@ -31,5 +31,5 @@ _tar:
 	cd _build && tar -czf ../vellum.tar.gz *
 
 _test:
-	#npm test
+	npm test
 	$(BIN)/jshint src/*.js
