@@ -10,11 +10,19 @@ define([
     var DEFAULT_FORM_ID = 'data';
 
     $.fn.popAttr = function (name) {
-        var val = this.attr(name);
+        var removed = false,
+            val = this.attr(name);
         try {
             this.removeAttr(name);
+            removed = true;
         } catch (e) {
             // catch InvalidCharacterError due to \: in attribute name
+        }
+        if (removed && !_.isUndefined(val)) {
+            if (!this[0].poppedAttributes) {
+                this[0].poppedAttributes = {};
+            }
+            this[0].poppedAttributes[name] = val;
         }
         return val;
     };
@@ -341,7 +349,8 @@ define([
     }
 
     function parseControlElement(form, nodePath, cEl, oldEl) {
-        var mug = form.getMugByPath(nodePath),
+        var itemsetEnabled = form.vellum.data.itemset,
+            mug = form.getMugByPath(nodePath),
             $cEl = oldEl || cEl,
             tagName, bindEl, dataEl, dataType, 
             appearance = $cEl.popAttr('appearance'),
@@ -353,10 +362,12 @@ define([
 
         //broadly categorize
         tagName = tagName.toLowerCase();
-        var hasItemset = $cEl.children('itemset').length;
+        var hasItemset;
         if(tagName === 'select') {
+            hasItemset = itemsetEnabled && $cEl.children('itemset').length;
             MugClass = hasItemset ? 'MSelectDynamic' : 'MSelect';
         }else if (tagName === 'select1') {
+            hasItemset = itemsetEnabled && $cEl.children('itemset').length;
             MugClass = hasItemset ? 'SelectDynamic' : 'Select';
         }else if (tagName === 'trigger') {
             MugClass = 'Trigger';
@@ -373,7 +384,7 @@ define([
             }
         }else if (tagName === 'item') {
             MugClass = 'Item';
-        }else if (tagName === 'itemset') {
+        }else if (tagName === 'itemset' && itemsetEnabled) {
             MugClass = 'Itemset';
         }else if (tagName === 'group') {
             MugClass = mugTypeFromGroup($cEl, appearance);
@@ -422,13 +433,20 @@ define([
     }
                 
     function populateMug (form, nodePath, mug, cEl, $parentEl) {
+        var itemsetEnabled = form.vellum.data.itemset,
+            $cEl = $(cEl);
         if (mug.__className === "ReadOnly") {
-            mug.p.rawControlXML = cEl;
+            if ($cEl.length === 1 && $cEl[0].poppedAttributes) {
+                // restore attributes removed during parsing
+                _.each($cEl[0].poppedAttributes, function (val, key) {
+                    $cEl.attr(key, val);
+                });
+            }
+            mug.p.rawControlXML = $cEl;
             return;
         }
         
-        var $cEl = $(cEl),
-            tag = mug.p.tagName,
+        var tag = mug.p.tagName,
             labelEl, hintEl;
 
         if(tag === 'repeat'){
@@ -452,7 +470,7 @@ define([
             parseDefaultValue($cEl.children('value'),mug);
         }
 
-        if (tag === 'itemset') {
+        if (tag === 'itemset' && itemsetEnabled) {
             mug.p.itemsetData = new util.BoundPropertyMap(form, {
                 nodeset: nodePath,
                 labelRef: $cEl.children('label').attr('ref'),

@@ -1069,7 +1069,7 @@ define([
     };
         
     fn.loadXML = function (formXML) {
-        var _this = this;
+        var form, _this = this;
         this.data.core.form = form = parser.parseXForm(formXML, {
             mugTypes: this.data.core.mugTypes,
             allowedDataNodeReferences: this.opts().core.allowedDataNodeReferences, 
