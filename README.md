@@ -84,8 +84,8 @@ $ make
 
 Test in a browser:
 ```
-$ python server.py
-$ chromium-browser http://localhost:8000
+$ `npm bin`/http-server
+$ chromium-browser http://localhost:8080
 ```
 
 By default, the test page will load the non-built version on 'localhost' and the
