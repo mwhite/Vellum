@@ -791,7 +791,7 @@ define([
                         parentMug = refMug.parentMug;
                     }
 
-                    var childMug = form.getMugChildByNodeID(parentMug, nodeID);
+                    var childMug = form.getMugChildrenByNodeID(parentMug, nodeID)[0];
                     if (childMug && childMug !== mug) {
                         // setup state for alert
                         _this.setUnsavedDuplicateNodeId(nodeID, true);
@@ -852,6 +852,12 @@ define([
             ret = this.data.core.form.getMugByUFID($(selected).prop('id'));
         }
         return ret;
+    };
+
+    fn.getCurrentMugInput = function (propPath) {
+        // HACK tightly coupled to widgets
+        // unfortunately the widget id is not easily accessible from here
+        return this.$f.find("[name=property-" + propPath + "]");
     };
 
     fn.mugToXPathReference = function (mug) {
@@ -950,6 +956,10 @@ define([
                                 _this.setUnsavedDuplicateNodeId(false);
                             }
                             _this.data.core.$modal.modal('hide');
+                            var input = _this.getCurrentMugInput("nodeID");
+                            if (input) {
+                                input.select().focus();
+                            }
                         }
                     },
                     {
