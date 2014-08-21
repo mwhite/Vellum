@@ -13,15 +13,14 @@ require([
 ) {
     var assert = chai.assert,
         call = util.call,
-        defaultPlugins = util.options.options.plugins;
-        plugins = _(defaultPlugins).filter(function (val) { return val !== 'itemset'; });
-    assert.notEqual(defaultPlugins.indexOf("itemset"), -1);
-    assert.equal(plugins.indexOf("itemset"), -1);
+        plugins = util.options.options.plugins || [],
+        pluginsWithItemset = _.union(plugins, ["itemset"]),
+        pluginsWithoutItemset = _(plugins).without("itemset");
 
     describe("The parser", function () {
         it("should gracefully handle itemset when the itemset plugin is disabled", function (done) {
             util.init({
-                plugins: plugins,
+                plugins: pluginsWithoutItemset,
                 core: {
                     form: TEST_XML_1, 
                     onReady: function () {
