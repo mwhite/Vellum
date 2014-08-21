@@ -36,7 +36,7 @@ define([
             // passed.  In practice, it's unlikely that you'd ever want to
             // instantiate multiple instances at once.
             this.each(function () {
-                options.plugins = _.uniq(corePlugins.concat(options.plugins || []));
+                options.plugins = _.union(corePlugins, options.plugins || []);
                 var instance = new $.vellum._instance($(this), options),
                     instanceId = $.data(this, "vellum_instance_id");
                 if (instanceId === undefined) {
