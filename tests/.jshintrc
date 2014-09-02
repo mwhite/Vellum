@@ -18,6 +18,13 @@
     "unused": "vars",
     "globals": {
         "define": false,
-        "requirejs": false
+        "require": false,
+        /* MOCHA */
+        "describe": false,
+        "it": false,
+        "before": false,
+        "beforeEach": false,
+        "after": false,
+        "afterEach": false
     }
 }

@@ -56,8 +56,6 @@ define([
     addOp(FunctionHandler, "selected", "has selected value");
 
     function showXPathEditor($div, options) {
-        var that = {};
-
         var editorContent = $div;
 
         var getExpressionInput = function () {
@@ -336,8 +334,8 @@ define([
 
             $xpathUI.find('.fd-xpath-show-advanced-button').click(function () {
                 if (window._gaq) {
-                    _gaq.push(['_trackEvent', 'Form Builder', 
-                               'Edit Expression', 'Show Advanced Mode']);
+                    window._gaq.push(['_trackEvent', 'Form Builder', 
+                                      'Edit Expression', 'Show Advanced Mode']);
                 }
 
                 showAdvancedMode(getExpressionFromSimpleMode());
@@ -368,9 +366,12 @@ define([
                     hasInstance = uiExpression.match('instance\\(');
                 if (results[0] || hasInstance) {
                     if (hasInstance) {
-                        alert("This expression is too complex for us to verify; specifically, it makes use of the " +
-                            "'instance' construct. Please be aware that if you use this construct you're " +
-                            "on your own in verifying that your expression is correct.");
+                        window.alert(
+                            "This expression is too complex for us to verify; " +
+                            "specifically, it makes use of the 'instance' " +
+                            "construct. Please be aware that if you use this " +
+                            "construct you're on your own in verifying that " +
+                            "your expression is correct.");
                     }
                     done(uiExpression);
                 } else {

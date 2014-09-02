@@ -1,8 +1,8 @@
 define(['module'], function (module) {
     var pieces = module.uri.split('/'),
         baseUrl = pieces.slice(0, pieces.length - 1).join('/') + '/',
-        moduleIdPieces = module.id.split('/'),
-        moduleId = moduleIdPieces[0],
+        //moduleIdPieces = module.id.split('/'),
+        //moduleId = moduleIdPieces[0],
         isBuilt = module.config().env !== 'development';
 
     // does RequireJS provide an API that would allow us to get this
@@ -382,6 +382,7 @@ define(['module'], function (module) {
     // If jQuery was loaded before RequireJS, use the existing instance.
     // http://www.manuel-strehl.de/dev/load_jquery_before_requirejs.en.html
     if (window.jQuery) {
+        var jQuery = window.jQuery;
         define('jquery', [], function() {
             return jQuery;
         });

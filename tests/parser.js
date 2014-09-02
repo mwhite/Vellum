@@ -15,7 +15,6 @@ require([
     var assert = chai.assert,
         call = util.call,
         plugins = util.options.options.plugins || [],
-        pluginsWithItemset = _.union(plugins, ["itemset"]),
         pluginsWithoutItemset = _(plugins).without("itemset");
 
     describe("The parser", function () {
