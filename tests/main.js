@@ -51,8 +51,8 @@ require([
         // handle potential slow free heroku dynos
         waitSeconds: 60,
         paths: {
+            'static': 'tests/static',
             'chai': 'bower_components/chai/chai',
-
             'equivalent-xml': 'bower_components/equivalent-xml-js/src/equivalent-xml'
         },
         shim: {
