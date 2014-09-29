@@ -1814,8 +1814,7 @@ define([
             "requiredAttr",
             "relevantAttr",
             "constraintAttr",
-            "repeat_count",
-            "no_add_remove"
+            "repeat_count"
         ];
     };
 
