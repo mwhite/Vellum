@@ -475,6 +475,7 @@ define([
         $modal.modal('show');
         $modal.on('shown', function () {
             codeMirror.refresh();
+            codeMirror.focus();
         });
     };
 
