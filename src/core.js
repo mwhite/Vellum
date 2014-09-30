@@ -1063,7 +1063,7 @@ define([
                 throw e;
             }
             done();
-        }, 500);
+        }, this.opts().core.loadDelay);
     };
 
     fn.disableUI = function () {
@@ -1902,6 +1902,7 @@ define([
 
     $.vellum.plugin("core", {
         form: null,
+        loadDelay: 500,
         patchUrl: false,
         saveUrl: false,
         saveType: 'full',
