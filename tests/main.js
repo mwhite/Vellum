@@ -90,6 +90,7 @@ require([
 
         // register tests on global mocha instance as side-effect
         'tests/core',
+        'tests/form',
         'tests/logic',
         'tests/parser',
         'tests/questionTypes',
