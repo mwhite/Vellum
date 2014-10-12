@@ -19,7 +19,7 @@ define([
     'vellum/mugs',
     'vellum/widgets',
     'vellum/parser',
-    'vellum/base',
+    'vellum/plugin',
     'less!vellum/less-style/main',
     'jquery.jstree',
     'jquery.bootstrap',

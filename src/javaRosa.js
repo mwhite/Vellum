@@ -13,7 +13,7 @@ define([
     'text!vellum/templates/button_remove.html',
     'vellum/widgets',
     'vellum/util',
-    'vellum/core'
+    'vellum/base'
 ], function (
     _,
     $,

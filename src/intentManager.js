@@ -4,7 +4,7 @@ define([
     'vellum/util',
     'underscore',
     'jquery',
-    'vellum/core'
+    'vellum/base'
 ], function (
     mugs,
     widgets,

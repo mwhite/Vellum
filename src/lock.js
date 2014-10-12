@@ -8,7 +8,7 @@
  *    'value': The only thing that can be changed is itext IDs and itext values.
  *    'none': same as nothing
  *
- * Locking is not recursive; you must lock a node's entire hierarchy if you
+ * Locking is not recursive; you must lock all of a node's ancestors if you
  * really don't want it to be moved.
  *
  * Spec:
@@ -16,7 +16,7 @@
  */
 define([
     'jquery',
-    'vellum/core'
+    'vellum/base'
 ], function (
     $
 ) {

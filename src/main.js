@@ -1,7 +1,6 @@
 // NOTE! Duplicated in require-config.js for bundles config.
 define([
-    'vellum/core',
-    'vellum/ignoreButRetain',
+    'vellum/base',
     'vellum/intentManager',
     'vellum/itemset',
     'vellum/javaRosa',
