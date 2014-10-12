@@ -95,8 +95,6 @@ behavior.
 Commands to run tests headlessly:
 ```
 $ npm test
-$ ./test
-$ ./test --help # for advanced usage
 ```
 
 Make dependency graph image:
