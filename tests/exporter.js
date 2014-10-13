@@ -19,8 +19,7 @@ require([
     item_id_tsv
 ) {
     var assert = chai.assert,
-        call = util.call,
-        plugins = util.options.options.plugins || [];
+        call = util.call;
 
     describe("The exporter", function () {
         beforeEach(function (done) {
