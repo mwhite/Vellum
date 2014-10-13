@@ -4,7 +4,7 @@ define([
     'vellum/util',
     'underscore',
     'jquery',
-    'vellum/base'
+    'vellum/core'
 ], function (
     mugs,
     widgets,
@@ -239,8 +239,9 @@ define([
             this.data.intents.manager.parseIntentTagsFromHead(
                 $(xml).find('h\\:head, head')
                     .children("odkx\\:intent, intent"));
-
+            
             this.__callOld();
+
         },
         contributeToHeadXML: function (xmlWriter, form) {
             this.__callOld();

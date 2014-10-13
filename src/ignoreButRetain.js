@@ -105,12 +105,10 @@ define([
     var xmls = new XMLSerializer();
 
     $.vellum.plugin("ignore", {}, {
-        loadXML: function (xmlStr) {
+        processXmlBeforeLoad: function (xmlStr) {
+            xmlStr = this.__callOld(xmlStr);
             this.data.ignore.ignoredNodes = [];
-            if (!xmlStr) {
-                this.__callOld();
-                return;
-            }
+
             var _this = this,
                 ignoredEls = [],
                 xmlDoc = $.parseXML(xmlStr),
@@ -118,9 +116,7 @@ define([
                 ignores = xml.find('[vellum\\:ignore="retain"]');
 
             if (ignores.length === 0) {
-                // skip serialize
-                this.__callOld();
-                return;
+                return xmlStr;
             }
 
             ignores.each(function (i, el) {
@@ -133,12 +129,11 @@ define([
             _.each(ignoredEls, function (el) {
                 el.parentElement.removeChild(el);
             });
-           
-            this.__callOld(xmls.serializeToString(xml[0]));
+
+            return xmls.serializeToString(xml[0]);
         },
-        createXML: function () {
-            var xmlStr = this.__callOld(),
-                ignoredNodes = this.data.ignore.ignoredNodes;
+        processXmlAfterCreate: function (xmlStr) {
+            var ignoredNodes = this.data.ignore.ignoredNodes;
             if (!ignoredNodes.length) {
                 return xmlStr;
             }

@@ -19,7 +19,7 @@ define([
     'vellum/mugs',
     'vellum/widgets',
     'vellum/parser',
-    'vellum/plugin',
+    'vellum/base',
     'less!vellum/less-style/main',
     'jquery.jstree',
     'jquery.bootstrap',
@@ -462,7 +462,7 @@ define([
 
         // populate text
         if(!this.data.core.formLoadingFailed){
-            $textarea.val(this.createXML());
+            $textarea.val(this.createAndProcessXml());
         } else {
             $textarea.val(this.data.core.failedLoadXML);
         }
@@ -998,7 +998,7 @@ define([
             try {
                 // a place for plugins to put parse warnings
                 _this.data.core.parseWarnings = [];
-                _this.loadXML(formString);
+                _this.processAndLoadXml(formString);
                 delete _this.data.core.parseWarnings;
 
                 if (formString) {
@@ -1079,6 +1079,15 @@ define([
         } else {
             $props.hide();
         }
+    };
+
+    fn.processAndLoadXml = function (xml) {
+        var processedXml = this.processXmlBeforeLoad(xml);
+        this.loadXML(processedXml);
+    };
+
+    fn.processXmlBeforeLoad = function (xml) {
+        return xml;
     };
         
     fn.loadXML = function (formXML) {
@@ -1569,13 +1578,22 @@ define([
         this.data.core.form.changeMugType(mug, type);
     };
 
+    fn.createAndProcessXml = function () {
+        var xml = this.createXML();
+        return this.processXmlAfterCreate(xml);
+    };
+
     fn.createXML = function () {
         return this.data.core.form.createXML();
     };
 
+    fn.processXmlAfterCreate = function (xml) {
+        return xml;
+    };
+
     fn.validateAndSaveXForm = function () {
         var _this = this,
-            formText = this.createXML(),
+            formText = this.createAndProcessXml(),
             isValidXML = true;
 
         try {

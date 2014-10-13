@@ -13,7 +13,7 @@ define([
     'text!vellum/templates/multimedia_existing_video.html',
     'tpl!vellum/templates/multimedia_nomedia',
     'text!vellum/templates/multimedia_block.html',
-    'vellum/base'
+    'vellum/core'
 ], function (
     require,
     module,

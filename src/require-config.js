@@ -8,7 +8,8 @@ define(['module'], function (module) {
     // does RequireJS provide an API that would allow us to get this
     // programmatically?
     var MAIN_COMPONENTS = [
-        'vellum/base',
+        'vellum/core',
+        'vellum/ignoreButRetain',
         'vellum/intentManager',
         'vellum/itemset',
         'vellum/javaRosa',

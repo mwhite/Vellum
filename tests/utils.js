@@ -110,7 +110,7 @@ define([
         init: init,
         call: call,
         saveAndReload: function(callback) {
-            call("loadXFormOrError", call("createXML"), callback);
+            call("loadXFormOrError", call("createAndProcessXml"), callback);
         },
         getInput: getInput,
         assertInputCount: assertInputCount,

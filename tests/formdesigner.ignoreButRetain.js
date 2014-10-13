@@ -23,11 +23,11 @@ define([
         var xmls = new XMLSerializer();
 
         var testXmlPair = function (rawXml, processedXml) {
-            call('loadXML', rawXml);
-            assertXmlEqual(rawXml, call('createXML'));
+            call('processAndLoadXml', rawXml);
+            assertXmlEqual(rawXml, call('createAndProcessXml'));
 
             call('getData').ignore.ignoredNodes = [];
-            assertXmlEqual(processedXml, call('createXML'));
+            assertXmlEqual(processedXml, call('createAndProcessXml'));
         };
 
         it("ignores data, bind, body, and setvalue nodes with various edge cases (see XML)", 
@@ -36,15 +36,20 @@ define([
             }
         );
 
+        it("can insert ignored element into empty parent", function () {
+            call('processAndLoadXml', EMPTY_PARENT);
+            assertXmlEqual(call('createAndProcessXml'), EMPTY_PARENT);
+        });
+
         it("does not insert multiple copies of ignored nodes", function () {
-            call('loadXML', MUTLI_MATCH);
-            assertXmlEqual(call('createXML'), MUTLI_MATCH);
+            call('processAndLoadXml', MUTLI_MATCH);
+            assertXmlEqual(call('createAndProcessXml'), MUTLI_MATCH);
         });
 
         it("can ignore elements in <head>", function () {
             // fixes TypeError: 'undefined' is not an object (evaluating 'element.firstElementChild')
-            call('loadXML', IGNORE_IN_HEAD);
-            assertXmlEqual(call('createXML'), IGNORE_IN_HEAD);
+            call('processAndLoadXml', IGNORE_IN_HEAD);
+            assertXmlEqual(call('createAndProcessXml'), IGNORE_IN_HEAD);
         });
 
         it("handles multiple ignore nodes in a row", function () {
@@ -52,15 +57,15 @@ define([
         });
 
         it("handles an ignore node's reference node being renamed", function () {
-            call('loadXML', UNRENAMED);
+            call('processAndLoadXml', UNRENAMED);
             call('getMugByPath', '/data/question9').p.nodeID = 'question9a';
-            assertXmlEqual(util.xmlines(RENAMED), call('createXML'));
+            assertXmlEqual(util.xmlines(RENAMED), call('createAndProcessXml'));
         });
 
         it("handles a node being renamed that's referenced in an ignore node's XML", function () {
-            call('loadXML', REFERENCED_UNRENAMED);
+            call('processAndLoadXml', REFERENCED_UNRENAMED);
             call('getMugByPath', '/data/question1').p.nodeID = 'foobar';
-            assertXmlEqual(REFERENCED_RENAMED, call('createXML'));
+            assertXmlEqual(REFERENCED_RENAMED, call('createAndProcessXml'));
         });
 
     });

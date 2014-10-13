@@ -16,7 +16,7 @@
  */
 define([
     'jquery',
-    'vellum/base'
+    'vellum/core'
 ], function (
     $
 ) {

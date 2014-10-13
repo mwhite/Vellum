@@ -26,7 +26,7 @@ define([
     'vellum/form',
     'vellum/mugs',
     'vellum/util',
-    'vellum/base',
+    'vellum/core',
     'jquery.bootstrap-better-typeahead'
 ], function (
     _,
