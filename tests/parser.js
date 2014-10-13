@@ -4,14 +4,12 @@ require([
     'jquery',
     'underscore',
     'tests/utils',
-    'vellum/parser',
     'text!static/parser/other_item.xml'
 ], function (
     chai,
     $,
     _,
     util,
-    parser,
     other_item_xml
 ) {
     var assert = chai.assert,
