@@ -19,8 +19,17 @@ define(['module'], function (module) {
         'vellum/polyfills'
     ];
 
+   
+    // For tests that explicitly require individual pieces of vellum in order to
+    // unit test exported functions to work with the built version, the pieces
+    // need to be pointed to by the main bundle definition.
+    var MAIN_DEPENDENCIES_IN_TEST = [
+        'vellum/form',
+        'vellum/itemset'
+    ];
+
     // not working correctly for local modules
-    function duplicateModulesAsBundles(config, mainComponents) {
+    function duplicateModulesAsBundles(config, mainComponents, mainDependenciesInTest) {
         if (!config.modules) {
             return config;
         }
@@ -30,7 +39,7 @@ define(['module'], function (module) {
                 include = module.include.slice(0);
 
             if (include.length === 1 && include[0] === 'main') {
-                include = mainComponents;
+                include = mainComponents.concat(mainDependenciesInTest || []);
             }
 
             for (var j = 0; j < include.length; j++) {
@@ -92,7 +101,8 @@ define(['module'], function (module) {
     var oldConfig = requirejs.config;
     requirejs.config = function (config) {
         if (isBuilt) {
-            config = duplicateModulesAsBundles(config, MAIN_COMPONENTS);
+            config = duplicateModulesAsBundles(
+                config, MAIN_COMPONENTS, MAIN_DEPENDENCIES_IN_TEST);
         }
 
         config = makeAbsolute(config);
