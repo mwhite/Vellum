@@ -494,6 +494,40 @@ define([
         $exportForm.find('textarea').val(this.data.core.form.getExportTSV());
         $modal.modal('show');
     };
+
+    fn.getExportColumns = function () {
+        return [
+            "Question", 
+            "Type",
+            "Display Condition", 
+            "Validation Condition", 
+            "Calculate Condition", 
+            "Required"
+        ];
+    };
+
+    fn.getExportRow = function (mug) {
+        var row = {};
+        
+        if (mug.p.tagName !== "item") {
+            row.Question = mug.form.getAbsolutePath(mug, true);
+        } else {
+            row.Question = mug.form.getAbsolutePath(mug.parentMug, true) +
+                            "-" + mug.p.defaultValue;
+        }
+        row.Type = mug.options.typeName;
+
+        
+        if (mug.p.getDefinition('relevantAttr')) {
+            row["Display Condition"] = mug.p.relevantAttr;
+            row["Calculate Condition"] = mug.p.calculateAttr;
+            row.Required = mug.p.requiredAttr ? 'yes' : 'no';
+
+            row["Validation Condition"] = mug.p.constraintAttr;
+        }
+
+        return row;
+    };
         
     fn.showFormPropertiesDialog = function () {
         // moved over just for display purposes, apparently the original

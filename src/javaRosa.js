@@ -1134,7 +1134,6 @@ define([
         }
     };
 
-
     var generateItextXLS = function (vellum, Itext) {
         // todo: fix abstraction barrier
         vellum.beforeSerialize();
@@ -1189,6 +1188,13 @@ define([
             }
         }
         return ret.join("\n");
+    };
+
+    // forms to export in TSV export
+    var ITEXT_COLUMNS = {
+        "default": "Text",
+        "audio": "Audio",
+        "image": "Image"
     };
 
     function validateItextItem(itextItem, name) {
@@ -1436,6 +1442,56 @@ define([
                 this.data.core.form);
 
             this.data.javaRosa.Itext.deduplicateIds();
+        },
+        getExportColumns: function () {
+            var columns = this.__callOld(),
+                typeColumnIndex = columns.indexOf('Type'),
+                languages = this.data.javaRosa.Itext.getLanguages(),
+                itextColumns = [];
+
+            _.each(ITEXT_COLUMNS, function (columnName, formType) {
+                _.each(languages, function (lang) {
+                    itextColumns.push(columnName + " (" + lang + ")");
+                });
+            });
+
+            columns.splice.apply(
+                columns, [typeColumnIndex + 1, 0].concat(itextColumns));
+
+            columns.splice(
+                columns.indexOf('Validation Condition') + 1, 0,
+                'Validation Message');
+
+            return columns;
+        },
+        getExportRow: function (mug) {
+            var row = this.__callOld(),
+                languages = this.data.javaRosa.Itext.getLanguages(),
+                defaultLang = this.data.javaRosa.Itext.getDefaultLanguage();
+            
+            var defaultOrNothing = function (item, language, form) {
+                return (item && item.hasForm(form)) ? 
+                    item.getForm(form).getValueOrDefault(language) : "";
+                // TODO see newline treatment in javaRosa.js TSV logic
+                //return value.replace(/\r?\n/g, "&#10;");
+            };
+
+            if (!mug.options.isDataOnly) {
+                _.each(ITEXT_COLUMNS, function (columnName, formType) {
+                    _.each(languages, function (lang) {
+                        var key = columnName + " (" + lang + ")";
+                        row[key] = defaultOrNothing(
+                            mug.p.labelItextID, lang, formType);
+                    });
+                });
+            }
+
+            if (mug.p.getDefinition('relevantAttr')) {
+                row["Validation Message"] = defaultOrNothing(
+                    mug.p.constraintMsgItextID, defaultLang, 'default');
+            }
+
+            return row;
         },
         getMugTypes: function () {
             var types = this.__callOld(),

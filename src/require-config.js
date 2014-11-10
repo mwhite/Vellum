@@ -333,7 +333,6 @@ define(['module'], function (module) {
 
                     //// form
                     //'vellum/writer',
-                    //'vellum/exporter'
                 //],
                 //exclude: [
                     //'exclude',

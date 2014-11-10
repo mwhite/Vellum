@@ -18,11 +18,9 @@ define([
     // Load these dependencies in the background after all other run-time
     // dependencies have been resolved, since they shouldn't be necessary
     // initially.
-    var writer,
-        exporter;
-    require(['vellum/writer', 'vellum/exporter'], function (w, e) {
+    var writer;
+    require(['vellum/writer'], function (w, e) {
         writer = w;
-        exporter = e;
     });
 
     var FormError = function (options) {
@@ -791,7 +789,20 @@ define([
         },
         getExportTSV: function () {
             this.vellum.beforeSerialize();
-            return exporter.generateExportTSV(this);
+
+            var _this = this,
+                columns = this.vellum.getExportColumns(), 
+                headers = [util.tabSeparate(columns)],
+                rows = _.map(this.getMugList(), function (mug) {
+                    var row = _this.vellum.getExportRow(mug);
+
+                    return util.tabSeparate(_.map(columns, function (column) {
+                        // ensure there aren't any null values
+                        return row[column] || "";
+                    }));
+                });
+
+            return headers.concat(rows).join("\n");
         }
     };
 
