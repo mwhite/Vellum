@@ -235,8 +235,8 @@ define([
     $.vellum.plugin("intents", {}, {
         loadXML: function (xml) {
             var manager = intentManager(null);
-            this.data.intents.manager = manager;
-            this.data.intents.manager.parseIntentTagsFromHead(
+            this.d.manager = manager;
+            this.d.manager.parseIntentTagsFromHead(
                 $(xml).find('h\\:head, head')
                     .children("odkx\\:intent, intent"));
             
@@ -245,16 +245,16 @@ define([
         },
         contributeToHeadXML: function (xmlWriter, form) {
             this.__callOld();
-            this.data.intents.manager.writeIntentXML(xmlWriter, form.dataTree);
+            this.d.manager.writeIntentXML(xmlWriter, form.dataTree);
         },
         handleNewMug: function (mug) {
             var ret = this.__callOld();
-            this.data.intents.manager.syncMugWithIntent(mug);
+            this.d.manager.syncMugWithIntent(mug);
             return ret;
         },
         handleMugParseFinish: function (mug) {
             this.__callOld();
-            this.data.intents.manager.syncMugWithIntent(mug);
+            this.d.manager.syncMugWithIntent(mug);
         },
         getMugTypes: function () {
             var types = this.__callOld();

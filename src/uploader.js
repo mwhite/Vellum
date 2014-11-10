@@ -244,13 +244,13 @@ define([
                 sessionid = opts.sessionid,
                 swfUrl = base + "../bower_components/MediaUploader/flashuploader.swf";
 
-            this.data.uploader.uploadEnabled = uploadEnabled;
-            this.data.uploader.objectMap = opts.objectMap;
+            this.d.uploadEnabled = uploadEnabled;
+            this.d.objectMap = opts.objectMap;
             if (!uploadEnabled) {
                 return;
             }
 
-            this.data.uploader.uploadControls = {
+            this.d.uploadControls = {
                 'image': this.initUploadController({
                     uploaderSlug: 'fd_hqimage', 
                     mediaType: 'image',
@@ -276,13 +276,13 @@ define([
         },
         initWidget: function (widget) {
             this.__callOld();
-            if (!this.data.uploader.uploadEnabled) {
+            if (!this.d.uploadEnabled) {
                 return;
             }
 
             addUploaderToWidget(widget, 
-                                this.data.uploader.objectMap, 
-                                this.data.uploader.uploadControls);
+                                this.d.objectMap, 
+                                this.d.uploadControls);
         },
         initUploadController: function (options) {
             var $uploaderModal = $(multimedia_modal({

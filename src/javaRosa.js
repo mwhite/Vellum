@@ -1216,19 +1216,19 @@ define([
     }, {
         init: function () {
             // todo: plugin abstraction barrier
-            this.data.javaRosa.ItextItem = ItextItem;
-            this.data.javaRosa.ItextForm = ItextForm;
-            this.data.javaRosa.ICONS = ICONS;
+            this.d.ItextItem = ItextItem;
+            this.d.ItextForm = ItextForm;
+            this.d.ICONS = ICONS;
         },
         handleNewMug: function (mug) {
             var ret = this.__callOld();
-            this.data.javaRosa.Itext.updateForNewMug(mug);
+            this.d.Itext.updateForNewMug(mug);
             return ret;
         },
         _makeLanguageSelectorDropdown: function () {
             var _this = this,
                 langList,
-                langs = this.data.javaRosa.Itext.getLanguages(),
+                langs = this.d.Itext.getLanguages(),
                 fullLangs,
                 $langSelector;
 
@@ -1259,7 +1259,7 @@ define([
         _changeTreeDisplayLanguage: function (lang) {
             var _this = this,
                 form = this.data.core.form,
-                itext = this.data.javaRosa.Itext;
+                itext = this.d.Itext;
            
             // todo: getMugDisplayName should not rely on this state, it should be
             // passed
@@ -1303,7 +1303,7 @@ define([
                 langs = this.opts().javaRosa.langs,
                 Itext;
 
-            this.data.javaRosa.Itext = Itext = new ItextModel();
+            this.d.Itext = Itext = new ItextModel();
 
             function eachLang() {
                 var el = $(this);
@@ -1379,7 +1379,7 @@ define([
         },
         handleMugParseFinish: function (mug) {
             this.__callOld();
-            this.data.javaRosa.Itext.updateForExistingMug(mug);
+            this.d.Itext.updateForExistingMug(mug);
         },
         contributeToModelXML: function (xmlWriter) {
             // here are the rules that govern itext
@@ -1396,7 +1396,7 @@ define([
             // 4. duplicate itext ids will be automatically updated to create
             // non-duplicates
 
-            var Itext = this.data.javaRosa.Itext,
+            var Itext = this.d.Itext,
                 languages = Itext.getLanguages(),
                 allItems = Itext.getNonEmptyItems(),
                 item, forms, form, lang, val;
@@ -1438,15 +1438,15 @@ define([
             this.__callOld();
 
             // remove crufty itext that isn't linked to anything in the form
-            this.data.javaRosa.Itext.items = getAllNonEmptyItextItemsFromMugs(
+            this.d.Itext.items = getAllNonEmptyItextItemsFromMugs(
                 this.data.core.form);
 
-            this.data.javaRosa.Itext.deduplicateIds();
+            this.d.Itext.deduplicateIds();
         },
         getExportColumns: function () {
             var columns = this.__callOld(),
                 typeColumnIndex = columns.indexOf('Type'),
-                languages = this.data.javaRosa.Itext.getLanguages(),
+                languages = this.d.Itext.getLanguages(),
                 itextColumns = [];
 
             _.each(ITEXT_COLUMNS, function (columnName, formType) {
@@ -1466,8 +1466,8 @@ define([
         },
         getExportRow: function (mug) {
             var row = this.__callOld(),
-                languages = this.data.javaRosa.Itext.getLanguages(),
-                defaultLang = this.data.javaRosa.Itext.getDefaultLanguage();
+                languages = this.d.Itext.getLanguages(),
+                defaultLang = this.d.Itext.getDefaultLanguage();
             
             var defaultOrNothing = function (item, language, form) {
                 return (item && item.hasForm(form)) ? 
@@ -1733,7 +1733,7 @@ define([
         },
         showItextDialog: function (done) {
             var $modal, $updateForm, $textarea,
-                Itext = this.data.javaRosa.Itext;
+                Itext = this.d.Itext;
 
             $modal = this.generateNewModal("Edit Bulk Translations", [
                 {

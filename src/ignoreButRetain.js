@@ -107,7 +107,7 @@ define([
     $.vellum.plugin("ignore", {}, {
         processXmlBeforeLoad: function (xmlStr) {
             xmlStr = this.__callOld(xmlStr);
-            this.data.ignore.ignoredNodes = [];
+            this.d.ignoredNodes = [];
 
             var _this = this,
                 ignoredEls = [],
@@ -120,7 +120,7 @@ define([
             }
 
             ignores.each(function (i, el) {
-                _this.data.ignore.ignoredNodes.push(getPathAndPosition(el));
+                _this.d.ignoredNodes.push(getPathAndPosition(el));
                 ignoredEls.push(el);
             });
 
@@ -133,7 +133,7 @@ define([
             return xmls.serializeToString(xml[0]);
         },
         processXmlAfterCreate: function (xmlStr) {
-            var ignoredNodes = this.data.ignore.ignoredNodes;
+            var ignoredNodes = this.d.ignoredNodes;
             if (!ignoredNodes.length) {
                 return xmlStr;
             }
@@ -217,7 +217,7 @@ define([
                 });
                 return val;
             };
-            _.each(this.data.ignore.ignoredNodes, function (node) {
+            _.each(this.d.ignoredNodes, function (node) {
                 if (node.position) {
                     node.position = replaceIdInSelector(node.position);
                 }
