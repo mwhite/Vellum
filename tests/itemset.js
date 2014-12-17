@@ -62,11 +62,11 @@ require([
 
                     var xml = call('createXML');
                     assert(xml.indexOf(
-                            '<instance src="jr://fixture/some-fixture" id="somefixture" />'
+                            '<instance src="jr://fixture/some-fixture" id="somefixture"'
                         ) !== -1 ||
                         xml.indexOf(
-                            '<instance id="somefixture" src="jr://fixture/some-fixture" />'
-                        ));
+                            '<instance id="somefixture" src="jr://fixture/some-fixture"'
+                        ) !== -1);
                     done();
                 });
             });
