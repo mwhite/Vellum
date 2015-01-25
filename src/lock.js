@@ -22,21 +22,21 @@ define([
 ) {
     $.vellum.plugin("lock", {}, {
         loadXML: function (xml) {
-            this.d.locks = {};
+            this.data.lock.locks = {};
             this.__callOld();
         },
         parseBindElement: function (form, el, path) {
             this.__callOld();
             var locked = el.attr('vellum:lock');
             if (locked && locked !== 'none') {
-                this.d.locks[path] = locked;
+                this.data.lock.locks[path] = locked;
             }
         },
         isPropertyLocked: function (mugPath, propertyPath) {
             if (this.__callOld()) {
                 return true;
             }
-            var lock = this.d.locks[mugPath];
+            var lock = this.data.lock.locks[mugPath];
             if (!lock) { 
                 return false; 
             }
@@ -52,13 +52,13 @@ define([
             return false;
         },
         isMugPathMoveable: function (mugPath) {
-            return this.__callOld() && !this.d.locks[mugPath];
+            return this.__callOld() && !this.data.lock.locks[mugPath];
         },
         isMugRemoveable: function (mug, mugPath) {
-            return this.__callOld() && !this.d.locks[mugPath];
+            return this.__callOld() && !this.data.lock.locks[mugPath];
         },
         isMugTypeChangeable: function (mug, mugPath) {
-            return this.__callOld() && this.d.locks[mugPath] !== 'value';
+            return this.__callOld() && this.data.lock.locks[mugPath] !== 'value';
         }
     });
 });

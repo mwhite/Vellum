@@ -16,7 +16,7 @@ define([
             $(window).resize(adjustToWindow);
             $(document).scroll(adjustToWindow);
 
-            this.d.offset = {
+            this.data.windowManager.offset = {
                 top: opts.topOffset || this.$f.offset().top-1,
                 bottom: opts.bottomOffset || 0,
                 left: opts.leftOffset || this.$f.offset().left
@@ -71,17 +71,17 @@ define([
         },
         getCurrentTopOffset: function () {
             var scrollPosition = $(window).scrollTop(),
-                offset = this.d.offset,
+                offset = this.data.windowManager.offset,
                 topOffset = (typeof offset.top === 'function') ? offset.top() : offset.top;
             return Math.min(Math.max(topOffset - scrollPosition, 0), topOffset);
         },
         getCurrentBottomOffset: function () {
-            var offset = this.d.offset;
+            var offset = this.data.windowManager.offset;
             return (typeof offset.bottom === 'function') ? offset.bottom() : offset.bottom;
         },
         getCurrentLeftOffset: function () {
             var scrollLeft = $(window).scrollLeft(),
-                offset = this.d.offset,
+                offset = this.data.windowManager.offset,
                 offsetLeft = (typeof offset.left === 'function') ? offset.left() : offset.left;
             return Math.min(offsetLeft - scrollLeft, offsetLeft);
         }

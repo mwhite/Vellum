@@ -57,9 +57,7 @@ define([
                 _.each(options.plugins, function (p) {
                     var initFn = $.vellum._initFns[p];
                     if (initFn) {
-                        initFn.apply($.extend({}, context, {
-                            d: instance.data[p]
-                        }));
+                        initFn.apply(context);
                     }
                 });
 
@@ -123,13 +121,11 @@ define([
                         return func.apply(this, args);
                     }
 
-                    // Call function with a __callOld() method added to
+                    // call function with a __callOld() method added to
                     // `this` that calls the next copy of this method in the
-                    // plugin stack and a `d` property to conveniently access
-                    // the data for this plugin.
+                    // plugin stack
                     return func.apply(
                         $.extend({}, this, {
-                            d: this.data[func.plugin],
                             __callOld: function (replaceArguments) {
                                 return func.old.apply(this, (replaceArguments ?
                                     Array.prototype.slice.call(arguments) : args));

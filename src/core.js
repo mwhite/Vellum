@@ -130,12 +130,12 @@ define([
     var fn = {};
 
     fn.init = function () {
-        this.d.mugTypes = new mugs.MugTypesManager(
+        this.data.core.mugTypes = new mugs.MugTypesManager(
             this.getMugSpec(), this.getMugTypes());
 
         var _this = this,
             bindBeforeUnload = this.opts().core.bindBeforeUnload;
-        this.d.saveButton = SaveButton.init({
+        this.data.core.saveButton = SaveButton.init({
             save: function() {
                 _this.ensureCurrentMugIsSaved(function () {
                     _this.validateAndSaveXForm();
@@ -143,10 +143,10 @@ define([
             },
             unsavedMessage: 'Are you sure you want to exit? All unsaved changes will be lost!'
         });
-        bindBeforeUnload(this.d.saveButton.beforeunload);
-        this.d.currentErrors = [];
+        bindBeforeUnload(this.data.core.saveButton.beforeunload);
+        this.data.core.currentErrors = [];
 
-        this.d.lastSavedXForm = this.opts().core.form;
+        this.data.core.lastSavedXForm = this.opts().core.form;
 
         this.$f.addClass('formdesigner');
         this.$f.empty().append(main_template);
@@ -174,22 +174,22 @@ define([
             $questionGroupContainer = this.$f.find(
                 '.fd-container-question-type-group');
 
-        this.d.QUESTIONS_IN_TOOLBAR = [];
-        this.d.QUESTION_TYPE_TO_GROUP = {};
+        this.data.core.QUESTIONS_IN_TOOLBAR = [];
+        this.data.core.QUESTION_TYPE_TO_GROUP = {};
 
         _.each(this._getQuestionGroups(), function (groupData) {
             var groupSlug = groupData.group[0];
 
             var getQuestionData = function (questionType) {
-                var mugType = _this.d.mugTypes[questionType],
+                var mugType = _this.data.core.mugTypes[questionType],
                     questionData = [
                         questionType, 
                         mugType.typeName, 
                         mugType.icon
                     ];
 
-                _this.d.QUESTIONS_IN_TOOLBAR.push(questionType);
-                _this.d.QUESTION_TYPE_TO_GROUP[questionType] = groupSlug;
+                _this.data.core.QUESTIONS_IN_TOOLBAR.push(questionType);
+                _this.data.core.QUESTION_TYPE_TO_GROUP[questionType] = groupSlug;
                 return questionData;
             };
 
@@ -199,13 +199,13 @@ define([
             }
 
             groupData.group[2] = groupData.group[2] || 
-                _this.d.mugTypes[groupData.group[0]].icon;
+                _this.data.core.mugTypes[groupData.group[0]].icon;
             $questionGroupContainer.append(
                 new QuestionTypeGroup(groupData, _this));
         });
 
         var $saveButtonContainer = this.$f.find('.fd-save-button');
-        this.d.saveButton.ui.appendTo($saveButtonContainer);
+        this.data.core.saveButton.ui.appendTo($saveButtonContainer);
     };
 
     fn._getQuestionGroups = function () {
@@ -306,11 +306,11 @@ define([
         });
 
         this.$f.find('.fd-expand-all').click(function() {
-            _this.d.$tree.jstree("open_all");
+            _this.data.core.$tree.jstree("open_all");
         });
 
         this.$f.find('.fd-collapse-all').click(function() {
-            _this.d.$tree.jstree("close_all");
+            _this.data.core.$tree.jstree("close_all");
         });
     };
 
@@ -342,7 +342,7 @@ define([
     fn.refreshVisibleData = function () {
         // update any display values that are affected
         var _this = this;
-        this.d.form.getMugList().map(function (mug) {
+        this.data.core.form.getMugList().map(function (mug) {
             _this.refreshMugName(mug);
         });
 
@@ -358,7 +358,7 @@ define([
 
     fn.getMugDisplayName = function (mug) {
         return mug.getDisplayName(
-            this.d.currentItextDisplayLanguage || 
+            this.data.core.currentItextDisplayLanguage || 
             this.data.javaRosa.Itext.getDefaultLanguage());
     };
 
@@ -410,7 +410,7 @@ define([
         }
         // todo: should this also show up for saving? Did it at some point in
         // the past?
-        if (!this.d.form.isFormValid(validateMug)) {
+        if (!this.data.core.form.isFormValid(validateMug)) {
 
             var msg = "There are validation errors in the form.  Do you want to continue anyway? WARNING:" +
                       "The form will not be valid and likely not perform correctly on your device!";
@@ -461,10 +461,10 @@ define([
         $textarea = $updateForm.find('textarea');
 
         // populate text
-        if(!this.d.formLoadingFailed){
+        if(!this.data.core.formLoadingFailed){
             $textarea.val(this.createAndProcessXml());
         } else {
-            $textarea.val(this.d.failedLoadXML);
+            $textarea.val(this.data.core.failedLoadXML);
         }
 
         codeMirror = require('codemirror').fromTextArea($textarea.get(0));
@@ -491,7 +491,7 @@ define([
         $modal.find('.modal-body').html($exportForm);
 
         // display current values
-        $exportForm.find('textarea').val(this.d.form.getExportTSV());
+        $exportForm.find('textarea').val(this.data.core.form.getExportTSV());
         $modal.modal('show');
     };
 
@@ -561,7 +561,7 @@ define([
             }));
             $modalBody.append($propertyInput);
             $propertyInput.find('input')
-                .val(_this.d.form[prop.slug])
+                .val(_this.data.core.form[prop.slug])
                 .on('keyup', function () {
                     var $this = $(this),
                         currentVal = $this.val();
@@ -569,7 +569,7 @@ define([
                         currentVal = prop.cleanValue(currentVal);
                         $this.val(currentVal);
                     }
-                    _this.d.form.setAttr(prop.slug, currentVal);
+                    _this.data.core.form.setAttr(prop.slug, currentVal);
                 });
         });
 
@@ -682,18 +682,18 @@ define([
     // separate from the rest of the UI code.
     fn._createJSTree = function () {
         typeData = {};
-        _(this.d.mugTypes.allTypes).each(function (type, typeName) {
+        _(this.data.core.mugTypes.allTypes).each(function (type, typeName) {
             typeData[typeName] = {
                 max_children: type.maxChildren,
                 valid_children: 
                     type.validChildTypes.length ? type.validChildTypes : "none"
             };
         });
-        validRootChildren = this.d.mugTypes.Group
+        validRootChildren = this.data.core.mugTypes.Group
             .validChildTypes.concat(['DataBindOnly']);
 
         var $tree, _this = this;
-        this.d.$tree = $tree = this.$f.find('.fd-question-tree');
+        this.data.core.$tree = $tree = this.$f.find('.fd-question-tree');
         $tree.jstree({
             "json_data" : {
                 "data" : []
@@ -722,7 +722,7 @@ define([
                             return false;
                         }
 
-                        var form = _this.d.form,
+                        var form = _this.data.core.form,
                             sourceMug = form.getMugByUFID(source.attr('id')),
                             isMoveable = _this.isMugPathMoveable(
                                 sourceMug.getAbsolutePath());
@@ -745,7 +745,7 @@ define([
                 "drop_finish" : function(data) {
                     var target = $(data.r),
                         sourceUid = $(data.o).attr('id'),
-                        mug = _this.d.form.getMugByUFID(sourceUid),
+                        mug = _this.data.core.form.getMugByUFID(sourceUid),
                         ops = target.closest(".xpath-expression-row").find(".op-select");
 
                     if (target) {
@@ -753,10 +753,10 @@ define([
                         // the .change fires the validation controls
                         target.val(target.val() + path).change();
 
-                        if (_this.d.currentlyEditedProperty) {
+                        if (_this.data.core.currentlyEditedProperty) {
                             warnOnCircularReference(
-                                _this.d.currentlyEditedProperty,
-                                _this.d.form,
+                                _this.data.core.currentlyEditedProperty,
+                                _this.data.core.form,
                                 mug,
                                 path);
                         }
@@ -783,12 +783,12 @@ define([
             // out.
         }).bind("select_node.jstree", function (e, data) {
             var ufid = $(data.rslt.obj[0]).prop('id'),
-                mug = _this.d.form.getMugByUFID(ufid);
+                mug = _this.data.core.form.getMugByUFID(ufid);
 
             _this.displayMugProperties(mug);
             _this.activateQuestionTypeGroup(mug.__className);
         }).bind("move_node.jstree", function (e, data) {
-            var form = _this.d.form,
+            var form = _this.data.core.form,
                 mug = form.getMugByUFID($(data.rslt.o).attr('id')),
                 refMug = form.getMugByUFID($(data.rslt.r).attr('id')),
                 position = data.rslt.p;
@@ -811,7 +811,7 @@ define([
                 if (!_this.ensureCurrentMugIsSaved()) {
                     return stop();
                 }
-                var form = _this.d.form,
+                var form = _this.data.core.form,
                     mug = form.getMugByUFID($(data.args[0]).attr('id')),
                     nodeID = mug.p.nodeID,
                     refMug = form.getMugByUFID($(data.args[1]).attr('id')),
@@ -839,7 +839,7 @@ define([
         }).bind('create_node.jstree', function (e, data) {
             _this.overrideJSTreeIcon(data.args[2].metadata.mug);
         }).bind('set_type.jstree', function (e, data) {
-            var mug = _this.d.form.getMugByUFID(data.args[1].substring(1));
+            var mug = _this.data.core.form.getMugByUFID(data.args[1].substring(1));
             _this.overrideJSTreeIcon(mug);
         });
     };
@@ -868,7 +868,7 @@ define([
     };
 
     fn.jstree = function () {
-        var tree = this.d.$tree;
+        var tree = this.data.core.$tree;
         return tree.jstree.apply(tree, arguments);
     };
 
@@ -884,7 +884,7 @@ define([
             ret = null;
         } else {
             selected = selected[0];
-            ret = this.d.form.getMugByUFID($(selected).prop('id'));
+            ret = this.data.core.form.getMugByUFID($(selected).prop('id'));
         }
         return ret;
     };
@@ -903,7 +903,7 @@ define([
         } else {
             // for the currently selected mug, return a "."
             return (mug.ufid === this.getCurrentlySelectedMug().ufid) ? 
-                "." : this.d.form.getAbsolutePath(mug);
+                "." : this.data.core.form.getAbsolutePath(mug);
         }
         // Instead of depending on the UI state (currently selected mug), it
         // would probably be better to have this be handled by the widget using
@@ -932,7 +932,7 @@ define([
     fn.activateQuestionTypeGroup = function (className) {
         this.resetQuestionTypeGroups();
 
-        var groupSlug = this.d.QUESTION_TYPE_TO_GROUP[className];
+        var groupSlug = this.data.core.QUESTION_TYPE_TO_GROUP[className];
         if (groupSlug && className !== 'MSelectDynamic' && className !== 'SelectDynamic') {
             this.$f
                 .find('.' + getQuestionTypeGroupClass(groupSlug))
@@ -946,8 +946,8 @@ define([
     };
 
     fn.setUnsavedDuplicateNodeId = function (nodeId, forMove) {
-        this.d.unsavedDuplicateNodeId = nodeId;
-        this.d.duplicateIsForMove = forMove;
+        this.data.core.unsavedDuplicateNodeId = nodeId;
+        this.data.core.duplicateIsForMove = forMove;
     };
 
     // Attempt to guard against doing actions when there are unsaved or invalid
@@ -962,10 +962,10 @@ define([
 
         var _this = this,
             mug = this.getCurrentlySelectedMug(),
-            duplicate = this.d.unsavedDuplicateNodeId,
-            duplicateIsForMove = this.d.duplicateIsForMove;
+            duplicate = this.data.core.unsavedDuplicateNodeId,
+            duplicateIsForMove = this.data.core.duplicateIsForMove;
 
-        if (this.d.hasXPathEditorChanged) {
+        if (this.data.core.hasXPathEditorChanged) {
             this.alert(
                 "Unsaved Changes in Editor",
                 "You have UNSAVED changes in the Expression Editor. Please save "+
@@ -973,7 +973,7 @@ define([
             return false;
         } else if (duplicate) {
             var verb = duplicateIsForMove ? 'would have' : 'has',
-                newQuestionId = this.d.form.generate_question_id(duplicate);
+                newQuestionId = this.data.core.form.generate_question_id(duplicate);
 
             this.alert(
                 "Duplicate Question ID",
@@ -991,7 +991,7 @@ define([
                             if (duplicateIsForMove) {
                                 _this.setUnsavedDuplicateNodeId(false);
                             }
-                            _this.d.$modal.modal('hide');
+                            _this.data.core.$modal.modal('hide');
                             var input = _this.getCurrentMugInput("nodeID");
                             if (input) {
                                 input.select().focus();
@@ -1004,7 +1004,7 @@ define([
                         action: function () {
                             mug.p.nodeID = newQuestionId;
                             _this.setUnsavedDuplicateNodeId(false);
-                            _this.d.$modal.modal('hide');
+                            _this.data.core.$modal.modal('hide');
                             _this.refreshVisibleData();
                             callback();
                         } 
@@ -1027,23 +1027,23 @@ define([
         window.setTimeout(function () {
             //universal flag for indicating that there's something wrong enough
             //with the form that vellum can't deal.
-            _this.d.formLoadingFailed = false;
-            _this.d.$tree.children().children().each(function (i, el) {
+            _this.data.core.formLoadingFailed = false;
+            _this.data.core.$tree.children().children().each(function (i, el) {
                 _this.jstree("delete_node", el);
             });
             try {
                 // a place for plugins to put parse warnings
-                _this.d.parseWarnings = [];
+                _this.data.core.parseWarnings = [];
                 _this.processAndLoadXml(formString);
-                delete _this.d.parseWarnings;
+                delete _this.data.core.parseWarnings;
 
                 if (formString) {
-                    _this._resetMessages(_this.d.form.errors);
+                    _this._resetMessages(_this.data.core.form.errors);
                     _this.reloadTree();
                     //re-enable all buttons and inputs in case they were disabled before.
                     _this.enableUI();
                     if (updateSaveButton) {
-                        _this.d.saveButton.fire('change');
+                        _this.data.core.saveButton.fire('change');
                     }
                 } else {
                     _this.$f.find('.fd-default-panel').removeClass('hide');
@@ -1075,8 +1075,8 @@ define([
                     });
                 _this._showConfirmDialog();
                 
-                _this.d.formLoadingFailed = true;
-                _this.d.failedLoadXML = formString;
+                _this.data.core.formLoadingFailed = true;
+                _this.data.core.failedLoadXML = formString;
 
                 // ok to hard code this because it's public
                 var validator_url = "https://www.commcarehq.org/formtranslate/";
@@ -1089,7 +1089,7 @@ define([
                     "entire form into the " + '<a href="' + validator_url +
                     '" target="_blank">Form Validator</a>';
 
-                //_this.d.form.updateError({
+                //_this.data.core.form.updateError({
                     //message: msg,
                     //level: "error"
                 //});
@@ -1128,11 +1128,11 @@ define([
         
     fn.loadXML = function (formXML) {
         var form, _this = this;
-        this.d.form = form = parser.parseXForm(formXML, {
-            mugTypes: this.d.mugTypes,
+        this.data.core.form = form = parser.parseXForm(formXML, {
+            mugTypes: this.data.core.mugTypes,
             allowedDataNodeReferences: this.opts().core.allowedDataNodeReferences, 
             externalInstances: this.opts().core.externalInstances
-        }, this, _this.d.parseWarnings);
+        }, this, _this.data.core.parseWarnings);
         form.formName = this.opts().core.formName || form.formName;
 
         form.on('question-type-change', function (e) {
@@ -1172,7 +1172,7 @@ define([
                 // fire a change event.
             }
 
-            _this.d.saveButton.fire('change');
+            _this.data.core.saveButton.fire('change');
         }).on('question-label-text-change', function (e) {
             _this.refreshMugName(e.mug);
             _this.toggleConstraintItext(e.mug);
@@ -1191,7 +1191,7 @@ define([
 
     fn.refreshMugName = function (mug, displayLang) {
         var $node = $('#' + mug.ufid),
-            name = mug.getDisplayName(this.d.currentItextDisplayLanguage);
+            name = mug.getDisplayName(this.data.core.currentItextDisplayLanguage);
         if (name !== this.jstree("get_text", $node)) {
             this.jstree('rename_node', $node, name);
         }
@@ -1213,7 +1213,7 @@ define([
 
     fn.reloadTree = function () {
         var _this = this,
-            form = this.d.form;
+            form = this.data.core.form;
 
         // monkey patch jstree.create to be faster, see
         // https://groups.google.com/d/msg/jstree/AT8b9fWdBw8/SB3bXFwYbiQJ
@@ -1255,7 +1255,7 @@ define([
         // ensure something is selected if possible
         if (!this.jstree('get_selected').length) {
             // if there's any nodes in the tree, just select the first
-            var all_nodes = this.d.$tree.find("li");
+            var all_nodes = this.data.core.$tree.find("li");
             if (all_nodes.length > 0) {
                 this.jstree('select_node', all_nodes[0]);
                 return true;
@@ -1276,7 +1276,7 @@ define([
         this.ensureCurrentMugIsSaved(function () {
             var foo = _this.getInsertTargetAndPosition(
                 _this.getCurrentlySelectedMug(), qType);
-            mug = _this.d.form.createQuestion(foo[0], foo[1], qType);
+            mug = _this.data.core.form.createQuestion(foo[0], foo[1], qType);
         });
         // the returned value will be `undefined` if ensureCurrentMugIsSaved
         // had to defer for user feedback
@@ -1322,10 +1322,10 @@ define([
 
     // todo: change this to use the model
     fn.getLowestNonDataNodeMug = function () {
-        var questions = this.d.$tree.children().children()
+        var questions = this.data.core.$tree.children().children()
                 .filter("[rel!='DataBindOnly']");
         if (questions.length > 0) {
-            return this.d.form.getMugByUFID(
+            return this.data.core.form.getMugByUFID(
                 $(questions[questions.length - 1]).attr('id'));
         } else {
             return null;
@@ -1338,7 +1338,7 @@ define([
     
     fn.createQuestion = function (mug, refMug, position) {
         var result = this.jstree("create",
-            refMug ? "#" + refMug.ufid : this.d.$tree,
+            refMug ? "#" + refMug.ufid : this.data.core.$tree,
             position,
             {
                 data: this.getMugDisplayName(mug),
@@ -1357,7 +1357,7 @@ define([
         );
 
         // jstree.create returns the tree root if types prevent creation
-        if (result[0] === this.d.$tree) {
+        if (result[0] === this.data.core.$tree) {
             throw new Error(
                 "Can't insert " + mug.__className + " into " + refMug.__className +
                 " (position: " + position + ")");
@@ -1369,7 +1369,7 @@ define([
     };
 
     fn.getMugByPath = function (path) {
-        return this.d.form.getMugByPath(path);
+        return this.data.core.form.getMugByPath(path);
     };
     
     fn.displayMugProperties = function (mug) {
@@ -1432,12 +1432,12 @@ define([
         var done = options.done;
         options.done = function (val) {
             done(val);
-            _this.d.hasXPathEditorChanged = false;
+            _this.data.core.hasXPathEditorChanged = false;
             $editor.hide();
             _this.refreshCurrentMug();
         };
         options.change = function () {
-            _this.d.hasXPathEditorChanged = true;
+            _this.data.core.hasXPathEditorChanged = true;
         };
         $editor.show();
 
@@ -1449,12 +1449,12 @@ define([
 
     fn.alert = function (title, message, buttons) {
         buttons = buttons || [];
-        if (this.d.isAlertVisible) {
+        if (this.data.core.isAlertVisible) {
             return;
         }
 
         var _this = this;
-        this.d.isAlertVisible = true;
+        this.data.core.isAlertVisible = true;
 
         var $modal = this.generateNewModal(
             title, buttons, buttons.length ? false : "OK");
@@ -1463,7 +1463,7 @@ define([
         // reference it in order to hide it at the right point in time.  This is
         // a bit of a hack but any alternative is probably a lot more
         // complicated.
-        this.d.$modal = $modal;
+        this.data.core.$modal = $modal;
 
         $modal.removeClass('fade');
         $modal.find('.modal-body')
@@ -1471,7 +1471,7 @@ define([
         $modal
             .modal('show')
             .on('hide', function () {
-                _this.d.isAlertVisible = false;
+                _this.data.core.isAlertVisible = false;
             });
     };
 
@@ -1496,10 +1496,10 @@ define([
         //}
 
         // for now form warnings get reset every time validation gets called.
-        this.d.form.clearErrors('form-warning');
+        this.data.core.form.clearErrors('form-warning');
       
         this._resetMessages(
-            this.d.form.errors.concat(
+            this.data.core.form.errors.concat(
                 _.map(this.getErrors(mug), function (error) {
                     return {
                         message: error,
@@ -1511,7 +1511,7 @@ define([
 
     fn.getErrors = function (mug) {
         return mug.getErrors().concat(
-            this.d.form._logicManager.getErrors(mug));
+            this.data.core.form._logicManager.getErrors(mug));
     };
 
     fn.getSectionDisplay = function (mug, options) {
@@ -1529,7 +1529,7 @@ define([
                     _this.showVisualValidation(mug);
                 },
                 displayXPathEditor: function (options) {
-                    _this.d.currentlyEditedProperty = prop.options.path;
+                    _this.data.core.currentlyEditedProperty = prop.options.path;
                     _this.displayXPathEditor(options);
                 }
             }));
@@ -1543,16 +1543,16 @@ define([
         var _this = this;
         var $baseToolbar = $(question_toolbar({
             isDeleteable: this.isMugRemoveable(mug,
-                    this.d.form.getAbsolutePath(mug)),
+                    this.data.core.form.getAbsolutePath(mug)),
             isCopyable: mug.options.isCopyable
         }));
         $baseToolbar.find('.fd-button-remove').click(function () {
             var mug = _this.getCurrentlySelectedMug();
-            _this.d.form.removeMugFromForm(mug);
+            _this.data.core.form.removeMugFromForm(mug);
         });
         $baseToolbar.find('.fd-button-copy').click(function () {
             _this.ensureCurrentMugIsSaved(function () {
-                var duplicate = _this.d.form.duplicateMug(
+                var duplicate = _this.data.core.form.duplicateMug(
                     _this.getCurrentlySelectedMug());
 
                 _this.jstree("deselect_all")
@@ -1570,12 +1570,12 @@ define([
         var getQuestionList = function (mug) {
             var currentType = mug.__className,
                 questions = (mug.options.limitTypeChangeTo || 
-                     _this.d.QUESTIONS_IN_TOOLBAR),
+                     _this.data.core.QUESTIONS_IN_TOOLBAR),
                 ret = [];
 
             for (var i = 0; i < questions.length; i++) {
                 var typeName = questions[i],
-                    q = _this.d.mugTypes[typeName];
+                    q = _this.data.core.mugTypes[typeName];
                 if (q.isTypeChangeable && currentType !== typeName &&
                     (!q.limitTypeChangeTo || 
                      q.limitTypeChangeTo.indexOf(currentType) !== -1))
@@ -1589,7 +1589,7 @@ define([
             }
             return ret;
         };
-        var form = this.d.form,
+        var form = this.data.core.form,
             changeable = this.isMugTypeChangeable(mug, form.getAbsolutePath(mug));
 
         var $questionTypeChanger = $(question_type_changer({
@@ -1610,7 +1610,7 @@ define([
     };
 
     fn.changeMugType = function (mug, type) {
-        this.d.form.changeMugType(mug, type);
+        this.data.core.form.changeMugType(mug, type);
     };
 
     fn.createAndProcessXml = function () {
@@ -1619,7 +1619,7 @@ define([
     };
 
     fn.createXML = function () {
-        return this.d.form.createXML();
+        return this.data.core.form.createXML();
     };
 
     fn.processXmlAfterCreate = function (xml) {
@@ -1681,7 +1681,7 @@ define([
             var diff_match_patch = require('diff-match-patch'),
                 dmp = new diff_match_patch();
             patch = dmp.patch_toText(
-                dmp.patch_make(this.d.lastSavedXForm, formText)
+                dmp.patch_make(this.data.core.lastSavedXForm, formText)
             );
             // abort if diff too long and send full instead
             if (patch.length > formText.length && opts.saveUrl) {
@@ -1693,13 +1693,13 @@ define([
         if (saveType === 'patch') {
             data = {
                 patch: patch,
-                sha1: CryptoJS.SHA1(this.d.lastSavedXForm).toString()
+                sha1: CryptoJS.SHA1(this.data.core.lastSavedXForm).toString()
             };
         } else {
             data = {xform: formText};
         }
 
-        this.d.saveButton.ajax({
+        this.data.core.saveButton.ajax({
             type: "POST",
             url: url,
             data: data,
@@ -1719,7 +1719,7 @@ define([
                 }
                 _this._hideConfirmDialog();
                 _this.opts().core.onFormSave(data);
-                _this.d.lastSavedXForm = formText;
+                _this.data.core.lastSavedXForm = formText;
             }
         });
     };
