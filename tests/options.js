@@ -95,7 +95,7 @@ define(function () {
             },
             objectMap: {}  // todo
         },
-        plugins: ['itemset']
+        extensions: ['itemset']
     };
 
     return {

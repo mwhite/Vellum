@@ -22,7 +22,8 @@ define([
     control_group,
     button_remove,
     widgets,
-    util
+    util,
+    Vellum
 ) {
     var SUPPORTED_MEDIA_TYPES = ['image', 'audio', 'video'],
         DEFAULT_EXTENSIONS = {
@@ -730,7 +731,8 @@ define([
                 newItextBtnClass = 'fd-new-itext-button';
 
             $customButton.click(function () {
-                var $modal, $newItemForm, $newItemInput;
+                var $modal, $newItemForm, $newItemInput,
+                    $f = mug.form.vellum.opts.core.$f;
                 $modal = mug.form.vellum.generateNewModal("New Content Type", [
                     {
                         title: "Add",
@@ -748,7 +750,7 @@ define([
                 $newItemInput = $("<input />").attr("type", "text");
                 $newItemInput.keyup(function () {
                     var currentValue = $(this).val(),
-                        $addButton = mug.form.vellum.$f.find('.' + newItextBtnClass);
+                        $addButton = $f.find('.' + newItextBtnClass);
                     if (!currentValue || 
                         RESERVED_ITEXT_CONTENT_TYPES.indexOf(currentValue) !== -1 || 
                         block.activeForms.indexOf(currentValue) !== -1) 
@@ -769,7 +771,7 @@ define([
                 $modal
                     .find('.modal-body')
                     .append($newItemForm);
-                mug.form.vellum.$f.find('.' + newItextBtnClass).click(function () {
+                $f.find('.' + newItextBtnClass).click(function () {
                     var newItemType = $newItemInput.val();
                     if (newItemType) {
                         block.addItext($newItemInput.val());
@@ -1210,7 +1212,7 @@ define([
         return "pass";
     }
 
-    $.vellum.plugin("javaRosa", {
+    Vellum.addExtension("javaRosa", {
         langs: ['en'],
         displayLanguage: 'en'
     }, {
@@ -1221,7 +1223,7 @@ define([
             this.data.javaRosa.ICONS = ICONS;
         },
         handleNewMug: function (mug) {
-            var ret = this.__callOld();
+            var ret = this.super();
             this.data.javaRosa.Itext.updateForNewMug(mug);
             return ret;
         },
@@ -1254,7 +1256,7 @@ define([
 
             langList.val(this.data.core.currentItextDisplayLanguage);
 
-            this.$f.find('.fd-question-tree-lang').html($langSelector);
+            this.opts.core.$f.find('.fd-question-tree-lang').html($langSelector);
         },
         _changeTreeDisplayLanguage: function (lang) {
             var _this = this,
@@ -1278,7 +1280,7 @@ define([
                             text = itext.getItem(itextID).getValue("default", lang);
                         text = text || _this.getMugDisplayName(mug);
                         _this.jstree('rename_node', $el, text ||
-                                _this.opts().core.noTextString);
+                                _this.opts.core.noTextString);
                     }
                 } catch (e) {
                     /* This happens immediately after question duplication when
@@ -1300,7 +1302,7 @@ define([
         // parse Itext Block and populate itext model
         loadXML: function (xmlString) {
             var _this = this,
-                langs = this.opts().javaRosa.langs,
+                langs = this.opts.javaRosa.langs,
                 Itext;
 
             this.data.javaRosa.Itext = Itext = new ItextModel();
@@ -1366,19 +1368,19 @@ define([
             }
 
             this.data.core.currentItextDisplayLanguage = 
-                this.opts().javaRosa.displayLanguage ||
+                this.opts.javaRosa.displayLanguage ||
                 Itext.getDefaultLanguage();
             
             this._makeLanguageSelectorDropdown();
 
-            this.__callOld();
+            this.super();
             
             Itext.on('change', function () {
                 _this.data.core.saveButton.fire('change');
             });
         },
         handleMugParseFinish: function (mug) {
-            this.__callOld();
+            this.super();
             this.data.javaRosa.Itext.updateForExistingMug(mug);
         },
         contributeToModelXML: function (xmlWriter) {
@@ -1435,7 +1437,7 @@ define([
         
         },
         beforeSerialize: function () {
-            this.__callOld();
+            this.super();
 
             // remove crufty itext that isn't linked to anything in the form
             this.data.javaRosa.Itext.items = getAllNonEmptyItextItemsFromMugs(
@@ -1444,7 +1446,7 @@ define([
             this.data.javaRosa.Itext.deduplicateIds();
         },
         getExportColumns: function () {
-            var columns = this.__callOld(),
+            var columns = this.super(),
                 typeColumnIndex = columns.indexOf('Type'),
                 languages = this.data.javaRosa.Itext.getLanguages(),
                 itextColumns = [];
@@ -1465,7 +1467,7 @@ define([
             return columns;
         },
         getExportRow: function (mug) {
-            var row = this.__callOld(),
+            var row = this.super(),
                 languages = this.data.javaRosa.Itext.getLanguages(),
                 defaultLang = this.data.javaRosa.Itext.getDefaultLanguage();
             
@@ -1494,7 +1496,7 @@ define([
             return row;
         },
         getMugTypes: function () {
-            var types = this.__callOld(),
+            var types = this.super(),
                 normal = types.normal;
 
             normal.Group.spec = util.extend(normal.Group.spec, {
@@ -1506,7 +1508,7 @@ define([
             return types;
         },
         getMugSpec: function () {
-            var spec = this.__callOld(),
+            var spec = this.super(),
                 databind = spec.databind,
                 control = spec.control;
 
@@ -1691,18 +1693,18 @@ define([
             return spec;
         },
         getMainProperties: function () {
-            var ret = this.__callOld();
+            var ret = this.super();
             ret.splice(1 + ret.indexOf('label'), 0, 'labelItext');
             return ret;
         },
         getLogicProperties: function () {
-            var ret = this.__callOld();
+            var ret = this.super();
             ret.splice(
                 1 + ret.indexOf('constraintAttr'), 0, 'constraintMsgItext');
             return ret;
         },
         getAdvancedProperties: function () {
-            var ret = this.__callOld();
+            var ret = this.super();
             ret.splice(
                 1 + ret.indexOf('xmlnsAttr'), 0,
                 'keyAttr',
@@ -1722,7 +1724,7 @@ define([
         },
         getToolsMenuItems: function () {
             var _this = this;
-            return this.__callOld().concat([
+            return this.super().concat([
                 {
                     name: "Edit Bulk Translations",
                     action: function (done) {

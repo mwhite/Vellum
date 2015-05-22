@@ -14,13 +14,13 @@ require([
 ) {
     var assert = chai.assert,
         call = util.call,
-        plugins = util.options.options.plugins || [],
-        pluginsWithoutItemset = _(plugins).without("itemset");
+        extensions = util.options.options.extensions || [],
+        extensionsWithoutItemset = _(extensions).without("itemset");
 
     describe("The parser", function () {
         it("should gracefully handle itemset when the itemset plugin is disabled", function (done) {
             util.init({
-                plugins: pluginsWithoutItemset,
+                extensions: extensionsWithoutItemset,
                 core: {
                     form: TEST_XML_1, 
                     onReady: function () {

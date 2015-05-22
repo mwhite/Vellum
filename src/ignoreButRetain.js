@@ -19,10 +19,11 @@
  * https://docs.google.com/document/d/12see6m3Lr6nVVgjfstS3oS6Vc1UT7l4bqYNRtDB-GXQ/
  */
 define([
+    'vellum/core',
     'underscore',
     'jquery',
-    'vellum/core'
 ], function (
+    Vellum,
     _,
     $
 ) {
@@ -104,9 +105,9 @@ define([
 
     var xmls = new XMLSerializer();
 
-    $.vellum.plugin("ignore", {}, {
+    Vellum.addExtension("ignore", {}, {
         processXmlBeforeLoad: function (xmlStr) {
-            xmlStr = this.__callOld(xmlStr);
+            xmlStr = this.super(xmlStr);
             this.data.ignore.ignoredNodes = [];
 
             var _this = this,
@@ -185,7 +186,7 @@ define([
                 });
         },
         handleMugRename: function (form, mug, newID, oldID, newPath, oldPath) {
-            this.__callOld();
+            this.super();
 
             var pathRegex = new RegExp(oldPath, 'g'),
                 idNameRegex = new RegExp('(> )?' + oldID + '( >)?', 'g'),

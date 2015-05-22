@@ -6,6 +6,7 @@ define([
     'underscore',
     'xpathmodels',
     'jquery',
+    'extensible',
     'text!vellum/templates/main.html',
     'tpl!vellum/templates/question_type_group',
     'tpl!vellum/templates/edit_source',
@@ -19,7 +20,6 @@ define([
     'vellum/mugs',
     'vellum/widgets',
     'vellum/parser',
-    'vellum/base',
     'less!vellum/less-style/main',
     'jquery.jstree',
     'jquery.bootstrap',
@@ -31,6 +31,7 @@ define([
     _,
     xpathmodels,
     $,
+    Extensible,
     main_template,
     question_type_group,
     edit_source,
@@ -129,12 +130,15 @@ define([
 
     var fn = {};
 
+    // helper for tests
+    fn.getData = function () { return this.data; };
+
     fn.init = function () {
         this.data.core.mugTypes = new mugs.MugTypesManager(
             this.getMugSpec(), this.getMugTypes());
 
         var _this = this,
-            bindBeforeUnload = this.opts().core.bindBeforeUnload;
+            bindBeforeUnload = this.opts.core.bindBeforeUnload;
         this.data.core.saveButton = SaveButton.init({
             save: function() {
                 _this.ensureCurrentMugIsSaved(function () {
@@ -146,10 +150,10 @@ define([
         bindBeforeUnload(this.data.core.saveButton.beforeunload);
         this.data.core.currentErrors = [];
 
-        this.data.core.lastSavedXForm = this.opts().core.form;
+        this.data.core.lastSavedXForm = this.opts.core.form;
 
-        this.$f.addClass('formdesigner');
-        this.$f.empty().append(main_template);
+        this.opts.core.$f.addClass('formdesigner')
+            .empty().append(main_template);
 
         this._init_toolbar();
         this._init_extra_tools();
@@ -160,8 +164,8 @@ define([
 
     fn.postInit = function () {
         var _this = this;
-        this.loadXFormOrError(this.opts().core.form, function () {
-            setTimeout(_this.opts().core.onReady, 0);
+        this.loadXFormOrError(this.opts.core.form, function () {
+            setTimeout(_this.opts.core.onReady, 0);
         });
     };
 
@@ -171,7 +175,8 @@ define([
         
     fn._init_toolbar = function () {
         var _this = this,
-            $questionGroupContainer = this.$f.find(
+            $f = this.opts.core.$f,
+            $questionGroupContainer = $f.find(
                 '.fd-container-question-type-group');
 
         this.data.core.QUESTIONS_IN_TOOLBAR = [];
@@ -204,7 +209,7 @@ define([
                 new QuestionTypeGroup(groupData, _this));
         });
 
-        var $saveButtonContainer = this.$f.find('.fd-save-button');
+        var $saveButtonContainer = $f.find('.fd-save-button');
         this.data.core.saveButton.ui.appendTo($saveButtonContainer);
     };
 
@@ -287,9 +292,10 @@ define([
 
     fn._init_extra_tools = function () {
         var _this = this,
-            menuItems = this.getToolsMenuItems();
+            menuItems = this.getToolsMenuItems(),
+            $f = this.opts.core.$f;
 
-        var $toolsMenu = this.$f.find('.fd-tools-menu');
+        var $toolsMenu = $f.find('.fd-tools-menu');
         $toolsMenu.empty();
         _(menuItems).each(function (menuItem) {
             var $a = $("<a tabindex='-1' href='#'>" + menuItem.name + "</a>").click(
@@ -305,11 +311,11 @@ define([
             $("<li></li>").append($a).appendTo($toolsMenu);
         });
 
-        this.$f.find('.fd-expand-all').click(function() {
+        $f.find('.fd-expand-all').click(function() {
             _this.data.core.$tree.jstree("open_all");
         });
 
-        this.$f.find('.fd-collapse-all').click(function() {
+        $f.find('.fd-collapse-all').click(function() {
             _this.data.core.$tree.jstree("close_all");
         });
     };
@@ -586,7 +592,7 @@ define([
             return button;
         });
 
-        var $modalContainer = this.$f.find('.fd-modal-generic-container'),
+        var $modalContainer = this.opts.core.$f.find('.fd-modal-generic-container'),
             $modal = $(modal_content({
                 title: title,
                 closeButtonTitle: closeButtonTitle
@@ -604,7 +610,7 @@ define([
     };
 
     fn._init_modal_dialogs = function () {
-        this.$f.find('.fd-dialog-confirm').dialog({
+        this.opts.core.$f.find('.fd-dialog-confirm').dialog({
             resizable: false,
             modal: true,
             buttons: {
@@ -621,7 +627,7 @@ define([
         
     fn._setup_fancybox = function () {
         $.fancybox.init();
-        this.$f.find("a.inline").fancybox({
+        this.opts.core.$f.find("a.inline").fancybox({
             hideOnOverlayClick: false,
             hideOnContentClick: false,
             enableEscapeButton: false,
@@ -631,7 +637,7 @@ define([
     };
         
     fn._resetMessages = function (errors) {
-        var error, messages_div = this.$f.find('.fd-messages');
+        var error, messages_div = this.opts.core.$f.find('.fd-messages');
         messages_div.empty();
 
         function asArray(value) {
@@ -693,14 +699,14 @@ define([
             .validChildTypes.concat(['DataBindOnly']);
 
         var $tree, _this = this;
-        this.data.core.$tree = $tree = this.$f.find('.fd-question-tree');
+        this.data.core.$tree = $tree = this.opts.core.$f.find('.fd-question-tree');
         $tree.jstree({
             "json_data" : {
                 "data" : []
             },
             "core": {
                 strings: {
-                    new_node: this.opts().core.noTextString
+                    new_node: this.opts.core.noTextString
                 }
             },
             "ui" : {
@@ -846,7 +852,7 @@ define([
 
     fn.setTreeNodeInvalid = function (uid, msg) {
         msg = msg.replace(/"/g, "'");
-        var $node = this.$f.find('#' + uid + ' > a');
+        var $node = this.opts.core.$f.find('#' + uid + ' > a');
         this.setTreeNodeValid(uid);
         $node.after(
             '<div class="ui-icon ui-icon-alert fd-tree-valid-alert-icon"' +
@@ -854,7 +860,7 @@ define([
     };
 
     fn.setTreeNodeValid = function (uid) {
-        this.$f.find('#' + uid + ' > a')
+        this.opts.core.$f.find('#' + uid + ' > a')
             .siblings(".fd-tree-valid-alert-icon").remove();
     };
 
@@ -892,7 +898,7 @@ define([
     fn.getCurrentMugInput = function (propPath) {
         // HACK tightly coupled to widgets
         // unfortunately the widget id is not easily accessible from here
-        return this.$f.find("[name=property-" + propPath + "]");
+        return this.opts.core.$f.find("[name=property-" + propPath + "]");
     };
 
     fn.mugToXPathReference = function (mug) {
@@ -911,7 +917,7 @@ define([
     };
 
     fn.overrideJSTreeIcon = function (mug) {
-        var $questionNode = this.$f.find('#' + mug.ufid),
+        var $questionNode = this.opts.core.$f.find('#' + mug.ufid),
             iconClass;
         if (!mug.getIcon) {
             // mug is the question type definition, not an instance
@@ -934,14 +940,14 @@ define([
 
         var groupSlug = this.data.core.QUESTION_TYPE_TO_GROUP[className];
         if (groupSlug && className !== 'MSelectDynamic' && className !== 'SelectDynamic') {
-            this.$f
+            this.opts.core.$f
                 .find('.' + getQuestionTypeGroupClass(groupSlug))
                 .find('.fd-question-type-related').removeClass('disabled');
         }
     };
 
     fn.resetQuestionTypeGroups = function () {
-        this.$f.find('.fd-container-question-type-group .fd-question-type-related')
+        this.opts.core.$f.find('.fd-container-question-type-group .fd-question-type-related')
             .addClass('disabled');
     };
 
@@ -1046,7 +1052,7 @@ define([
                         _this.data.core.saveButton.fire('change');
                     }
                 } else {
-                    _this.$f.find('.fd-default-panel').removeClass('hide');
+                    _this.opts.core.$f.find('.fd-default-panel').removeClass('hide');
                 }
                 $.fancybox.hideActivity();
             } catch (e) {
@@ -1097,7 +1103,7 @@ define([
                 throw e;
             }
             done();
-        }, this.opts().core.loadDelay);
+        }, this.opts.core.loadDelay);
     };
 
     fn.disableUI = function () {
@@ -1109,7 +1115,7 @@ define([
     };
 
     fn.flipUI = function (state) {
-        var $props = this.$f.find('.fd-question-properties');
+        var $props = this.opts.core.$f.find('.fd-question-properties');
         if (state) {
             $props.show();
         } else {
@@ -1130,10 +1136,10 @@ define([
         var form, _this = this;
         this.data.core.form = form = parser.parseXForm(formXML, {
             mugTypes: this.data.core.mugTypes,
-            allowedDataNodeReferences: this.opts().core.allowedDataNodeReferences, 
-            externalInstances: this.opts().core.externalInstances
+            allowedDataNodeReferences: this.opts.core.allowedDataNodeReferences, 
+            externalInstances: this.opts.core.externalInstances
         }, this, _this.data.core.parseWarnings);
-        form.formName = this.opts().core.formName || form.formName;
+        form.formName = this.opts.core.formName || form.formName;
 
         form.on('question-type-change', function (e) {
             _this.jstree("set_type", e.qType, '#' + e.mug.ufid);
@@ -1373,11 +1379,12 @@ define([
     };
     
     fn.displayMugProperties = function (mug) {
-        var $props = this.$f.find('.fd-question-properties'),
+        var $f = this.opts.core.$f,
+            $props = $f.find('.fd-question-properties'),
             _getWidgetClassAndOptions = function (property) {
                 return getWidgetClassAndOptions(property, mug);
             };
-        this.$f.find('.fd-default-panel').addClass('hide');
+        $f.find('.fd-default-panel').addClass('hide');
 
         /* update display */
         $props.animate({}, 200);
@@ -1385,10 +1392,10 @@ define([
         this.showContent();
         this.hideQuestionProperties();
 
-        var $content = this.$f.find(".fd-props-content").empty(),
+        var $content = this.opts.core.$f.find(".fd-props-content").empty(),
             sections = this.getSections();
 
-        this.$f.find('.fd-props-toolbar').html(this.getMugToolbar(mug));
+        $f.find('.fd-props-toolbar').html(this.getMugToolbar(mug));
         for (var i = 0; i < sections.length; i++) {
             var section = sections[i];
 
@@ -1404,27 +1411,28 @@ define([
         }
 
         $props.show();
-        this.$f.find('.fd-help').fdHelp();
+        $f.find('.fd-help').fdHelp();
 
         this.toggleConstraintItext(mug);
         this.showVisualValidation(mug);
     };
         
     fn.hideQuestionProperties = function() {
-        this.$f.find('.fd-question-properties').hide();
+        this.opts.core.$f.find('.fd-question-properties').hide();
     };
 
     fn.showContent = function () {
-        this.$f.find('.fd-content-right').show();
+        this.opts.core.$f.find('.fd-content-right').show();
     };
 
     fn.hideContent = function () {
-        this.$f.find('.fd-content-right').hide();
+        this.opts.core.$f.find('.fd-content-right').hide();
     };
 
     fn.displayXPathEditor = function(options) {
         var _this = this,
-            $editor = this.$f.find('.fd-xpath-editor');
+            $f = this.opts.core.$f,
+            $editor = $f.find('.fd-xpath-editor');
 
         options.DEBUG_MODE = DEBUG_MODE;
         this.hideQuestionProperties();
@@ -1443,7 +1451,7 @@ define([
 
         require(['vellum/expressionEditor'], function (expressionEditor) {
             expressionEditor.showXPathEditor(
-                _this.$f.find('.fd-xpath-editor-content'), options);
+                $f.find('.fd-xpath-editor-content'), options);
         });
     };
 
@@ -1664,7 +1672,7 @@ define([
     fn.send = function (formText, saveType) {
         var CryptoJS = require('CryptoJS'),
             _this = this,
-            opts = this.opts().core,
+            opts = this.opts.core,
             patch, data;
         saveType = saveType || opts.saveType;
 
@@ -1718,7 +1726,7 @@ define([
                     }
                 }
                 _this._hideConfirmDialog();
-                _this.opts().core.onFormSave(data);
+                _this.opts.core.onFormSave(data);
                 _this.data.core.lastSavedXForm = formText;
             }
         });
@@ -1933,8 +1941,8 @@ define([
     fn.contributeToHeadXML = function (xmlWriter, form) {}; 
 
     fn.initWidget = function (widget) {};
-
-    $.vellum.plugin("core", {
+    
+    return new Extensible({
         form: null,
         loadDelay: 500,
         patchUrl: false,

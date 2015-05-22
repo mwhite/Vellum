@@ -32,6 +32,8 @@
         "requirejs-tpl": "jfparadis/requirejs-tpl",
         "requirejs-plugins": "~1.0.2",
 
+        "extensible": "~0.1.1",
+
         "langcodes": "dimagi/langcodes",
         "XMLWriter": "dimagi/XMLWriter",
         "MediaUploader": "dimagi/MediaUploader#master",

@@ -18,22 +18,23 @@ define([
     'jquery',
     'vellum/core'
 ], function (
-    $
+    $,
+    Vellum
 ) {
-    $.vellum.plugin("lock", {}, {
+    Vellum.addExtension("lock", {}, {
         loadXML: function (xml) {
             this.data.lock.locks = {};
-            this.__callOld();
+            this.super();
         },
         parseBindElement: function (form, el, path) {
-            this.__callOld();
+            this.super();
             var locked = el.attr('vellum:lock');
             if (locked && locked !== 'none') {
                 this.data.lock.locks[path] = locked;
             }
         },
         isPropertyLocked: function (mugPath, propertyPath) {
-            if (this.__callOld()) {
+            if (this.super()) {
                 return true;
             }
             var lock = this.data.lock.locks[mugPath];
@@ -52,13 +53,13 @@ define([
             return false;
         },
         isMugPathMoveable: function (mugPath) {
-            return this.__callOld() && !this.data.lock.locks[mugPath];
+            return this.super() && !this.data.lock.locks[mugPath];
         },
         isMugRemoveable: function (mug, mugPath) {
-            return this.__callOld() && !this.data.lock.locks[mugPath];
+            return this.super() && !this.data.lock.locks[mugPath];
         },
         isMugTypeChangeable: function (mug, mugPath) {
-            return this.__callOld() && this.data.lock.locks[mugPath] !== 'value';
+            return this.super() && this.data.lock.locks[mugPath] !== 'value';
         }
     });
 });

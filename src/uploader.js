@@ -4,6 +4,7 @@ define([
     'underscore',
     'jquery',
     'vellum/util',
+    'vellum/core',
     'tpl!vellum/templates/multimedia_modal',
     'tpl!vellum/templates/multimedia_upload_trigger',
     'text!vellum/templates/multimedia_queue.html',
@@ -12,14 +13,14 @@ define([
     'text!vellum/templates/multimedia_existing_audio.html',
     'text!vellum/templates/multimedia_existing_video.html',
     'tpl!vellum/templates/multimedia_nomedia',
-    'text!vellum/templates/multimedia_block.html',
-    'vellum/core'
+    'text!vellum/templates/multimedia_block.html'
 ], function (
     require,
     module,
     _,
     $,
     util,
+    Vellum,
     multimedia_modal,
     multimedia_upload_trigger,
     multimedia_queue,
@@ -227,7 +228,7 @@ define([
     var pieces = module.uri.split('/'),
         base = pieces.slice(0, pieces.length - 1).join('/') + '/';
    
-    $.vellum.plugin("uploader", {
+    Vellum.addExtension("uploader", {
         objectMap: false,
         sessionid: false,
         uploadUrls: {
@@ -237,7 +238,7 @@ define([
         },
     }, {
         init: function () {
-            var opts = this.opts().uploader,
+            var opts = this.opts.uploader,
                 uploadUrls = opts.uploadUrls,
                 uploadEnabled = opts.objectMap && opts.uploadUrls && 
                     opts.uploadUrls.image,
@@ -275,7 +276,7 @@ define([
             };
         },
         initWidget: function (widget) {
-            this.__callOld();
+            this.super();
             if (!this.data.uploader.uploadEnabled) {
                 return;
             }
@@ -289,7 +290,7 @@ define([
                 mediaType: options.mediaType,
                 modalId: options.uploaderSlug
             }));
-            this.$f.find('.fd-multimedia-modal-container').append($uploaderModal);
+            this.opts.core.$f.find('.fd-multimedia-modal-container').append($uploaderModal);
 
             // Load the uploader and its dependencies in the background after
             // core dependencies are already loaded, since it's not necessary at

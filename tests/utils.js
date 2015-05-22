@@ -49,8 +49,8 @@ define([
         if (opts.javaRosa && opts.javaRosa.langs) {
             vellum_options.javaRosa.langs = opts.javaRosa.langs;
         }
-        if (opts.plugins) {
-            vellum_options.plugins = opts.plugins;
+        if (opts.extensions) {
+            vellum_options.extensions = opts.extensions;
         }
         vellum_options.core = vellum_options.core || {};
         var originalSaveUrl = vellum_options.core.saveUrl || function () {};

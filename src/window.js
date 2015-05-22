@@ -2,37 +2,40 @@ define([
     'jquery',
     'vellum/core'
 ], function (
-    $
+    $,
+    Vellum
 ) {
-    $.vellum.plugin('windowManager', {
+    Vellum.addExtension('windowManager', {
         minHeight: 200,
         bottomOffset: 0
     }, {
         init: function () {
             var _this = this,
-                opts = this.opts().windowManager,
-                adjustToWindow = function () { _this.adjustToWindow(); };
+                opts = this.opts.windowManager,
+                adjustToWindow = function () { _this.adjustToWindow(); },
+                $f = this.opts.core.$f;
 
             $(window).resize(adjustToWindow);
             $(document).scroll(adjustToWindow);
 
             this.data.windowManager.offset = {
-                top: opts.topOffset || this.$f.offset().top-1,
+                top: opts.topOffset || $f.offset().top-1,
                 bottom: opts.bottomOffset || 0,
-                left: opts.leftOffset || this.$f.offset().left
+                left: opts.leftOffset || $f.offset().left
             };
 
             this.adjustToWindow();
         },
         adjustToWindow: function () {
-            if (!this.$f.is(':visible')) {
+            var $f = this.opts.core.$f;
+            if (!$f.is(':visible')) {
                 return;
             }
 
             var availableVertSpace = $(window).height() - this.getCurrentTopOffset(),
             availableHorizSpace,
             position = (this.getCurrentTopOffset() === 0) ? 'fixed' : 'static',
-            $fdc = this.$f.find('.fd-ui-container');
+            $fdc = $f.find('.fd-ui-container');
 
             // so that the document doesn't have to resize for the footer.
             $fdc.parent().css('height', availableVertSpace + 'px');
@@ -49,7 +52,7 @@ define([
             var availableColumnSpace = availableVertSpace - $('.fd-toolbar').outerHeight(),
             panelHeight, columnHeight, treeHeight;
 
-            panelHeight = Math.max(availableColumnSpace - 5, this.opts().windowManager.minHeight);
+            panelHeight = Math.max(availableColumnSpace - 5, this.opts.windowManager.minHeight);
             columnHeight = panelHeight - $('.fd-head').outerHeight();
             treeHeight = columnHeight;
 
@@ -66,8 +69,9 @@ define([
             .css('height', columnHeight - $fdc.find('.fd-props-toolbar').outerHeight(true) + 'px');
         },
         getLeftWidth: function () {
-            return 2 + this.$f.find('.fd-content-left').outerWidth() + 
-               this.$f.find('.fd-content-divider').outerWidth(true);
+            var $f = this.opts.core.$f;
+            return 2 + $f.find('.fd-content-left').outerWidth() + 
+               $f.find('.fd-content-divider').outerWidth(true);
         },
         getCurrentTopOffset: function () {
             var scrollPosition = $(window).scrollTop(),

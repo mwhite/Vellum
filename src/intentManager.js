@@ -1,11 +1,12 @@
 define([
+    'vellum/core',
     'vellum/mugs',
     'vellum/widgets',
     'vellum/util',
     'underscore',
-    'jquery',
-    'vellum/core'
+    'jquery'
 ], function (
+    Vellum,
     mugs,
     widgets,
     util,
@@ -232,7 +233,7 @@ define([
         }
     });
 
-    $.vellum.plugin("intents", {}, {
+    Vellum.addExtension("intents", {}, {
         loadXML: function (xml) {
             var manager = intentManager(null);
             this.data.intents.manager = manager;
@@ -240,29 +241,29 @@ define([
                 $(xml).find('h\\:head, head')
                     .children("odkx\\:intent, intent"));
             
-            this.__callOld();
+            this.super();
 
         },
         contributeToHeadXML: function (xmlWriter, form) {
-            this.__callOld();
+            this.super();
             this.data.intents.manager.writeIntentXML(xmlWriter, form.dataTree);
         },
         handleNewMug: function (mug) {
-            var ret = this.__callOld();
+            var ret = this.super();
             this.data.intents.manager.syncMugWithIntent(mug);
             return ret;
         },
         handleMugParseFinish: function (mug) {
-            this.__callOld();
+            this.super();
             this.data.intents.manager.syncMugWithIntent(mug);
         },
         getMugTypes: function () {
-            var types = this.__callOld();
+            var types = this.super();
             types.normal.AndroidIntent = AndroidIntent;
             return types;
         },
         getMainProperties: function () {
-            return this.__callOld().concat([
+            return this.super().concat([
                 "androidIntentAppId",
                 "androidIntentExtra",
                 "androidIntentResponse"

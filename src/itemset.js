@@ -36,7 +36,8 @@ define([
     widgets,
     form,
     mugs,
-    util
+    util,
+    Vellum
 ) {
     var mugTypes = mugs.baseMugTypes.normal,
         normalizeXPathExpr = form.normalizeXPathExpr,
@@ -98,15 +99,15 @@ define([
         form.createQuestion(mug, 'into', "Itemset", true);
     }
 
-    $.vellum.plugin("itemset", {}, {
+    Vellum.addExtension("itemset", {}, {
         getSelectQuestions: function () {
-            return this.__callOld().concat([
+            return this.super().concat([
                 "SelectDynamic",
                 "MSelectDynamic"
             ]);
         },
         getMugTypes: function () {
-            var types = this.__callOld();
+            var types = this.super();
             types.auxiliary.Itemset = Itemset;
             types.normal = $.extend(types.normal, {
                 "MSelectDynamic": util.extend(mugTypes.MSelect, {
@@ -127,7 +128,7 @@ define([
             return types;
         },
         getMugSpec: function () {
-            var spec = this.__callOld();
+            var spec = this.super();
 
             return spec;
         }
@@ -251,7 +252,7 @@ define([
                 handleSourceChange($(this).val());
                 updateValue();
             });
-            mug.form.vellum.$f.find('[name="data_source"]')
+            mug.form.vellum.opts.core.$f.find('[name="data_source"]')
                 .replaceWith($sourceSelect);
             oldSourceVal = NONE;
         }

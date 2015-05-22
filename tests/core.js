@@ -18,7 +18,7 @@ require([
 ) {
     var assert = chai.assert,
         call = util.call,
-        pluginsWithoutItemset = _(util.options.options.plugins || []).without("itemset");
+        extensionsWithoutItemset = _(util.options.options.extensions || []).without("itemset");
 
     describe("Vellum core", function () {
         it("should not allow adding questions with matching paths", function (done) {
@@ -41,7 +41,7 @@ require([
 
         it("should allow mug rename with itemset in form when the itemset plugin is disabled", function (done) {
             util.init({
-                plugins: pluginsWithoutItemset,
+                extensions: extensionsWithoutItemset,
                 core: {
                     form: TEST_XML_1,
                     onReady: function () {

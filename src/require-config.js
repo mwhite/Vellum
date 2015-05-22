@@ -165,6 +165,8 @@ define(['module'], function (module) {
             'underscore': '../bower_components/underscore/underscore',
             'XMLWriter': '../bower_components/XMLWriter/XMLWriter',
 
+            'extensible': '../bower_components/extensible/extensible',
+
             // todo: should convert xpath submodule to AMD
             'xpath': '../bower_components/xpath/xpath',
             'xpathmodels': '../bower_components/xpath/models',
